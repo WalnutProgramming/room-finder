@@ -1,0 +1,43 @@
+{
+  "name": "@walnutprogramming/direction-maker",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/module.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/plugin-proposal-numeric-separator": "^7.7.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "@babel/preset-typescript": "^7.7.7",
+    "@rollup/plugin-commonjs": "^11.0.0",
+    "@rollup/plugin-node-resolve": "^6.0.0",
+    "prettier": "^1.19.1",
+    "rollup": "^1.27.13",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-terser": "^5.1.3",
+    "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "core-js": "3",
+    "dijkstrajs": "^1.0.1"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check -- --watch",
+    "build": "npm run build:types && npm run bundle",
+    "build-without-bundle": "npm run build:types && npm run build:js",
+    "build:types": "tsc --emitDeclarationOnly",
+    "babel-compile": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
+    "bundle": "rollup -c"
+  },
+  "prettier": {
+    "trailingComma": "es5"
+  }
+}
