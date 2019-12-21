@@ -1,6 +1,6 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
-import { getGraph, getShortestPath } from "./graph/graph";
+import { getGraph, getShortestPath } from "./graph";
 
 /**
  * This is the class that we use to define a building. (See

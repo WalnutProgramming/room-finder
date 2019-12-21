@@ -1,6 +1,3 @@
-// @ts-check
-
-"use strict";
 import dijkstra from "dijkstrajs";
 
 export { getGraph, getShortestPath };
@@ -13,14 +10,19 @@ export { getGraph, getShortestPath };
  * @param {[string, string][]} hallwayConnections an array of the pairs of connected hallway nodes
  * @return {*} The graph to be used by getShortestPath
  */
-function getGraph(hallConnectors, stairConnections, hallwayConnections) {
-  /** @type {{[key: string]: {[key: string]: number}}} */
-  const graph = {};
+function getGraph(
+  hallConnectors: {
+    nodeId: string;
+    edgeLengthFromPreviousNodeInHallway: number;
+  }[][],
+  stairConnections: string[][],
+  hallwayConnections: [string, string][]
+): any {
+  const graph: dijkstra.Graph = {};
   hallConnectors.forEach(hall => {
     return hall.forEach((node, ind) => {
       const id = node.nodeId;
-      /** @type {{[key: string]: number}} */
-      const edgesTo = {};
+      const edgesTo: { [key: string]: number } = {};
       if (ind != 0) {
         edgesTo[hall[ind - 1].nodeId] =
           hall[ind].edgeLengthFromPreviousNodeInHallway;
@@ -57,6 +59,10 @@ function getGraph(hallConnectors, stairConnections, hallwayConnections) {
   return graph;
 }
 
-function getShortestPath(graph, idFrom, idTo) {
+function getShortestPath(
+  graph: dijkstra.Graph,
+  idFrom: string,
+  idTo: string
+): string[] {
   return dijkstra.find_path(graph, idFrom, idTo);
 }
