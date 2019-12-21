@@ -1,5 +1,5 @@
-import Direction from "./Direction";
-import Room from "./Room";
+import { Direction } from "./Direction";
+import { Room } from "./Room";
 
 /**
  * A [[Stair]] represents one entrance to a set of stairs in a
@@ -7,7 +7,7 @@ import Room from "./Room";
  * adding to the `stairConnections` argument of the [[Hallway]]
  * constructor.
  */
-export default class Stairs extends Room {
+export class Stairs extends Room {
   constructor(
     side?: Direction | undefined,
     nodeId?: (string | null) | undefined,

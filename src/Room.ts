@@ -1,5 +1,4 @@
-import Direction from "./Direction";
-import { isLeftOrRight, dirToTurnString } from "./directionHelpers";
+import { Direction, isLeftOrRight, dirToTurnString } from "./Direction";
 
 type Turn = typeof import("./Turn");
 
@@ -14,7 +13,7 @@ interface Options {
  * This class represents a single element in a hallway that is not a [[Turn]].
  * This can be a room, but it can also be a [[Fork]] or [[Stairs]].
  */
-export default class Room {
+export class Room {
   public nodeId: (string | null) | undefined = null;
   public prefix: string | undefined = "room";
   public aliases: string[] = [];

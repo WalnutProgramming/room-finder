@@ -1,9 +1,9 @@
-import Hallway from "./Hallway";
-import Room from "./Room";
-import Fork from "./Fork";
-import Direction from "./Direction";
+import { Hallway } from "./Hallway";
+import { Room } from "./Room";
+import { Fork } from "./Fork";
+import { Direction } from "./Direction";
 
-export default class SimpleHallway extends Hallway {
+export class SimpleHallway extends Hallway {
   constructor(nodeId: string, partList: Room[], public hallwayName: string) {
     super([new Fork(Direction.FRONT, nodeId, ""), ...partList]);
   }

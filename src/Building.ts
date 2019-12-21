@@ -1,5 +1,5 @@
-import Hallway from "./Hallway";
-import Room from "./Room";
+import { Hallway } from "./Hallway";
+import { Room } from "./Room";
 import { getGraph, getShortestPath } from "./graph/graph";
 
 /**
@@ -29,7 +29,7 @@ import { getGraph, getShortestPath } from "./graph/graph";
  * Continue, then turn left into room C
  * ```
  */
-export default class Building {
+export class Building {
   readonly hallwayNodes: {
     nodeId: string;
     edgeLengthFromPreviousNodeInHallway: number;

@@ -6,7 +6,7 @@ import { terser } from "rollup-plugin-terser";
 
 const extensions = [".js", ".jsx", ".ts", ".tsx"];
 
-const name = "DirectionMaker";
+const name = "RoomFinder";
 
 export default {
   input: "./src/index.ts",
@@ -26,18 +26,18 @@ export default {
     babel({ extensions, include: ["src/**/*"] }),
 
     // Minify
-    terser()
+    terser(),
   ],
 
   output: [
     {
       file: pkg.main,
       format: "umd",
-      name
+      name,
     },
     {
       file: pkg.module,
-      format: "es"
-    }
-  ]
+      format: "es",
+    },
+  ],
 };

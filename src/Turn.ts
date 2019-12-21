@@ -1,14 +1,10 @@
-import Room from "./Room";
-import {
-  dirToString,
-  dirToTurnString,
-  isLeftOrRight,
-} from "./directionHelpers";
+import { Room } from "./Room";
+import { dirToString, dirToTurnString, isLeftOrRight } from "./Direction";
 
 /**
  * This class represents a turn in a single [[Hallway]].
  */
-export default class Turn {
+export class Turn {
   constructor(public direction: -1 | 1) {}
 
   onPass(forwardOrBackward: -1 | 1, prevRoom: Room | Turn): string {
