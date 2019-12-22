@@ -4,11 +4,11 @@ export { getGraph, getShortestPath };
 
 /**
  *
- * @param {{nodeId: string, edgeLengthFromPreviousNodeInHallway: number}[][]} hallConnectors an array of each hallway's array of nodes
- * @param {string[][]} stairConnections an array of stairs, where each stair has
+ * @param hallConnectors - an array of each hallway's array of nodes
+ * @param stairConnections - an array of stairs, where each stair has
  * a list of nodes going from the top to the bottom
- * @param {[string, string][]} hallwayConnections an array of the pairs of connected hallway nodes
- * @return {*} The graph to be used by getShortestPath
+ * @param hallwayConnections - an array of the pairs of connected hallway nodes
+ * @return The graph to be used by getShortestPath
  */
 function getGraph(
   hallConnectors: {
@@ -17,7 +17,7 @@ function getGraph(
   }[][],
   stairConnections: string[][],
   hallwayConnections: [string, string][]
-): any {
+) {
   const graph: dijkstra.Graph = {};
   hallConnectors.forEach(hall => {
     return hall.forEach((node, ind) => {
