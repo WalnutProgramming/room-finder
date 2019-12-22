@@ -1,13 +1,14 @@
 {
   "name": "room-finder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": "github:WalnutProgramming/room-finder",
   "license": "AGPL-3.0-only",
   "main": "./dist/index.js",
   "module": "./dist/module.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "/dist"
+    "/dist",
+    "/external-types"
   ],
   "devDependencies": {
     "@babel/cli": "^7.7.7",
