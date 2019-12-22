@@ -1,7 +1,6 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
 import { getGraph, getShortestPath } from "./graph";
-import dijkstra from "dijkstrajs";
 
 /**
  * This is the class that we use to define a building. (See `src/walnut.ts` for
@@ -35,7 +34,7 @@ export class Building {
    * The graph that is generated from the nodes in the [[hallways]] and the
    * [[hallwayConnections]] and [[stairConnections]] between them
    */
-  readonly graph: dijkstra.Graph;
+  readonly graph: { [key: string]: { [key: string]: number } };
   /**
    * An array of all of the names and aliases for all of the rooms
    */
