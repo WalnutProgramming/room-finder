@@ -1,7 +1,8 @@
 {
   "name": "@walnutprogramming/room-finder",
   "version": "0.0.1",
-  "private": true,
+  "repository": "github:WalnutProgramming/room-finder",
+  "license": "AGPL-3.0-only",
   "main": "./dist/index.js",
   "module": "./dist/module.js",
   "types": "./dist/index.d.ts",
@@ -30,12 +31,13 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "type-check:watch": "npm run type-check -- --watch",
-    "build": "npm run build:types && npm run bundle",
-    "build-without-bundle": "npm run build:types && npm run build:js",
+    "type-check:watch": "yarn type-check -- --watch",
+    "build": "yarn build:types && yarn bundle",
+    "build-without-bundle": "yarn build:types && yarn build:js",
     "build:types": "tsc --emitDeclarationOnly",
     "babel-compile": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
-    "bundle": "rollup -c"
+    "bundle": "rollup -c",
+    "prepublish": "yarn build"
   },
   "prettier": {
     "trailingComma": "es5"
