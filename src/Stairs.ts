@@ -2,10 +2,9 @@ import { Direction } from "./Direction";
 import { Room } from "./Room";
 
 /**
- * A [[Stair]] represents one entrance to a set of stairs in a
- * [[Hallway]]. You can connect the [[Stair]]s of 2 hallways by
- * adding to the `stairConnections` argument of the [[Hallway]]
- * constructor.
+ * [[Stairs]] represents one entrance to a set of stairs in a [[Hallway]]. You
+ * can connect the [[Stairs]] of 2 hallways by adding to the `stairConnections`
+ * argument of the [[Hallway]] constructor.
  */
 export class Stairs extends Room {
   constructor(

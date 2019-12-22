@@ -7,12 +7,19 @@ import { Turn } from "./Turn";
  * and connect them with 2 [[Fork]]s.
  */
 export class Hallway {
+  /**
+   *
+   * @param partList - An array of every [[Room]] or [[Turn]] in the hallway.
+   * You can choose arbitrarily which end of the hallway to start at, but make
+   * sure to keep the sides and directions of the [[Room]]s and [[Turn]]s
+   * consistent with the direction you choose as forward.
+   * @param name - The name of this [[Hallway]].
+   */
   constructor(public partList: (Room | Turn)[], public name?: string | null) {}
 
   /**
    * @param - name The name of the room
-   * @returns The index of the room, or -1 if
-   *  there's no room with that name
+   * @returns The index of the room, or -1 if there's no room with that name
    */
   getRoomInd(name: string): number {
     return this.partList.findIndex(elem => {
@@ -27,8 +34,7 @@ export class Hallway {
 
   /**
    * @param roomInd - The index of the room in the hallway
-   * @returns The id of the "closest" node to the room
-   * in the hallway
+   * @returns The id of the "closest" node to the room in the hallway
    */
   idOfClosestNodeToIndex(roomInd: number): string {
     let closestNodeInd: number;
@@ -58,12 +64,11 @@ export class Hallway {
   }
 
   /**
-   * Gives the directions to get from one room to another
-   * in a single hallway given the hallway and the indices
-   * of the rooms in the hallway.
+   * Gives the directions to get from one room to another in a single hallway
+   * given the indices of the rooms in the hallway.
    * @param from - The index of the starting room
    * @param to - The index of the room to go to
-   * @returns The directions, with steps separated with newlines
+   * @returns The directions. Steps are separated with newlines.
    */
   getDirectionsFromIndices(from: number, to: number): string {
     const fromRoom = this.partList[from] as Room;

@@ -1,10 +1,11 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
 import { getGraph, getShortestPath } from "./graph";
+import dijkstra from "dijkstrajs";
 
 /**
- * This is the class that we use to define a building. (See
- * `src/walnut.ts` for a large example.)
+ * This is the class that we use to define a building. (See `src/walnut.ts` for
+ * a large example.)
  *
  * Here's an example with a single hallway:
  * ```ts
@@ -30,26 +31,35 @@ import { getGraph, getShortestPath } from "./graph";
  * ```
  */
 export class Building {
-  readonly hallwayNodes: {
-    nodeId: string;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][];
-  readonly graph: any;
+  /**
+   * The graph that is generated from the nodes in the [[hallways]] and the
+   * [[hallwayConnections]] and [[stairConnections]] between them
+   */
+  readonly graph: dijkstra.Graph;
+  /**
+   * An array of all of the names and aliases for all of the rooms
+   */
   readonly roomsList: string[];
 
+  /**
+   *
+   * @param hallways - All of the hallways in this building
+   * @param hallwayConnections - All of the "fork" connections between
+   * nodes in the building. Each connection is an array that contains the 2
+   * connected node IDs.
+   * @param stairConnections - All of the "stair" connections between nodes
+   * in the building. Each connection is an array of node IDs that starts at the
+   * bottom floor and goes to the top floor.
+   */
   constructor(
     readonly hallways: Hallway[],
     readonly hallwayConnections: [string, string][] = [],
     readonly stairConnections: string[][] = []
   ) {
-    this.hallwayNodes = this.hallways.map(h => {
+    const hallwayNodes = this.hallways.map(h => {
       return h.nodes;
     });
-    this.graph = getGraph(
-      this.hallwayNodes,
-      stairConnections,
-      hallwayConnections
-    );
+    this.graph = getGraph(hallwayNodes, stairConnections, hallwayConnections);
     this.roomsList = hallways
       .flatMap(h => h.partList)
       .filter(a => "name" in a && a.name != null)

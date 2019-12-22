@@ -2,23 +2,32 @@ import { Direction, isLeftOrRight, dirToTurnString } from "./Direction";
 
 type Turn = typeof import("./Turn");
 
-interface Options {
-  nodeId?: string | null;
-  prefix?: string;
-  aliases?: string[];
-  edgeLengthFromPreviousNodeInHallway?: number | null;
-}
-
 /**
  * This class represents a single element in a hallway that is not a [[Turn]].
  * This can be a room, but it can also be a [[Fork]] or [[Stairs]].
  */
 export class Room {
+  /**
+   * afkdsjkfaj
+   */
   public nodeId: (string | null) | undefined = null;
   public prefix: string | undefined = "room";
   public aliases: string[] = [];
   public edgeLengthFromPreviousNodeInHallway: number | null | undefined = null;
 
+  /**
+   *
+   * @param name - The name of this [[Room]]
+   * @param side - The side of the [[Hallway]] that this [[Room]] is on.
+   * You should decide which side the [[Room]] is on based on how you've
+   * ordered the [[Room]]s in the [[Hallway]] - that is, which direction you've
+   * arbitrarily decided is "forward."
+   * @param nodeId - See [[nodeId]]
+   * @param edgeLengthFromPreviousNodeInHallway - See
+   * [[edgeLengthFromPreviousNodeInHallway]]
+   * @param prefix - See [[prefix]]
+   * @param aliases - See [[aliases]]
+   */
   constructor(
     public name?: (string | null) | undefined,
     public side: Direction = Direction.LEFT,
@@ -27,7 +36,12 @@ export class Room {
       edgeLengthFromPreviousNodeInHallway,
       prefix = "room",
       aliases = [],
-    }: Options = {}
+    }: {
+      nodeId?: string | null;
+      prefix?: string;
+      aliases?: string[];
+      edgeLengthFromPreviousNodeInHallway?: number | null;
+    } = {}
   ) {
     this.nodeId = nodeId;
     this.prefix = prefix;
