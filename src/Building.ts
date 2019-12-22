@@ -145,6 +145,12 @@ export class Building {
     // and the indices of the rooms in the hallways
     const [fromHallwayInd, fromInd] = this.getHallwayIndexAndIndex(from)!;
     const [toHallwayInd, toInd] = this.getHallwayIndexAndIndex(to)!;
+
+    // If there's only one hallway, we don't need to worry about nodes
+    if (this.hallways.length === 1) {
+      return this.hallways[0].getDirectionsFromIndices(fromInd, toInd);
+    }
+
     // Find IDs of the nodes (stairs or hallways) closest to these rooms
     const closestNodeFromInd = this.hallways[
       fromHallwayInd
