@@ -37,7 +37,7 @@
     "build:types": "tsc --emitDeclarationOnly",
     "babel-compile": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
     "bundle": "rollup -c",
-    "prepublish": "yarn build"
+    "prepare": "yarn build"
   },
   "prettier": {
     "trailingComma": "es5"
