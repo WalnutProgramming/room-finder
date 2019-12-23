@@ -1,3 +1,4 @@
+/// <reference path="../external-types/dijkstra.d.ts" />
 import dijkstra from "dijkstrajs";
 
 export { getGraph, getShortestPath };
