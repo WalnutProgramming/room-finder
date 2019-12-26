@@ -61,8 +61,8 @@ export class Building {
     this.graph = getGraph(hallwayNodes, stairConnections, hallwayConnections);
     this.roomsList = hallways
       .flatMap(h => h.partList)
-      .filter(a => "name" in a && a.name != null)
-      .flatMap(r => (r as Room).name!)
+      .filter((a): a is Room => "name" in a && a.name != null)
+      .flatMap(r => r.aliases.concat(r.name!))
       .sort();
   }
 
