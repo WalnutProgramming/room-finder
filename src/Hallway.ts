@@ -57,10 +57,17 @@ export class Hallway {
     nodeId: string;
     edgeLengthFromPreviousNodeInHallway: number;
   }[] {
-    return this.partList.filter(r => "nodeId" in r && r.nodeId != null) as {
-      nodeId: string;
-      edgeLengthFromPreviousNodeInHallway: number;
-    }[];
+    return this.partList
+      .filter(
+        (r): r is Room & { nodeId: string } => "nodeId" in r && r.nodeId != null
+      )
+      .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
+        nodeId,
+        edgeLengthFromPreviousNodeInHallway:
+          edgeLengthFromPreviousNodeInHallway == null
+            ? 1
+            : edgeLengthFromPreviousNodeInHallway,
+      }));
   }
 
   /**
