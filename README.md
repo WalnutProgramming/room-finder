@@ -92,3 +92,70 @@ You can also directly include `room-finder` with a `<script>` tag by either [dow
 ```
 
 The version number in the URL isn't required, but it's recommended so that breaking changes in the package don't break your app.
+
+## Usage
+
+### Modeling a simple Hallway
+
+![A single, straight hallway with 8 rooms that alternate between the left and right sides](images/1.png)
+
+```js
+// examples/ex1.ts#L3-L1000
+
+// A Hallway has an array of Rooms. Each Room has a name and a side.
+const hallway = new Hallway([
+  new Room("102", Direction.RIGHT),
+  new Room("103", Direction.LEFT),
+  new Room("104", Direction.RIGHT),
+  new Room("105", Direction.LEFT),
+  new Room("106", Direction.RIGHT),
+  // If you don't specify a side, the default is Direction.LEFT
+  new Room("107"),
+  new Room("108", Direction.RIGHT),
+  new Room("109", Direction.LEFT),
+]);
+
+// A Building has an array of Hallways.
+// In this case, there's only one Hallway in the Building.
+const building = new Building([hallway]);
+
+console.log(building.getDirections("102", "109"));
+// Turn right out of room 102
+// Continue, then turn left into room 109
+
+console.log(building.getDirections("107", "103"));
+// Turn right out of room 107
+// Continue, then turn right into room 103
+```
+
+### Adding a Turn
+
+![The same hallway as before, but with a Turn inserted between 105 and 106](images/2.png)
+
+```js
+// examples/ex2.ts#L3-L1000
+
+const hallway = new Hallway([
+  new Room("102", Direction.RIGHT),
+  new Room("103", Direction.LEFT),
+  new Room("104", Direction.RIGHT),
+  new Room("105", Direction.LEFT),
+  new Turn(Direction.RIGHT),
+  new Room("106", Direction.RIGHT),
+  new Room("107"),
+  new Room("108", Direction.RIGHT),
+  new Room("109", Direction.LEFT),
+]);
+
+const building = new Building([hallway]);
+
+console.log(building.getDirections("102", "109"));
+// Turn right out of room 102
+// Continue, then turn right (after passing room 105 on your left)
+// Continue, then turn left into room 109
+
+console.log(building.getDirections("107", "103"));
+// Turn right out of room 107
+// Continue, then turn left (after passing room 106 on your left)
+// Continue, then turn right into room 103
+```

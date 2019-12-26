@@ -20,6 +20,7 @@
     "@babel/preset-typescript": "^7.7.7",
     "@rollup/plugin-commonjs": "^11.0.0",
     "@rollup/plugin-node-resolve": "^6.0.0",
+    "embedme": "^1.19.0",
     "prettier": "^1.19.1",
     "rollup": "^1.27.13",
     "rollup-plugin-babel": "^4.3.3",
@@ -39,8 +40,9 @@
     "build:types": "tsc --emitDeclarationOnly",
     "babel-compile": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
     "bundle": "rollup -c",
-    "prepare": "yarn build",
-    "docs": "yarn typedoc --out docs --mode file src"
+    "prepare": "yarn build && yarn embedme README.md && yarn docs",
+    "readme": "yarn embedme README.md",
+    "docs": "yarn readme && yarn typedoc --out docs --mode file src"
   },
   "prettier": {
     "trailingComma": "es5"
