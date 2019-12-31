@@ -1,5 +1,6 @@
 import { Direction } from "./Direction";
 import { Room } from "./Room";
+import { dirToTurnString } from "./Direction";
 
 /**
  * [[Stairs]] represents one entrance to a set of stairs in a [[Hallway]]. You
@@ -21,5 +22,21 @@ export class Stairs extends Room {
       return "the " + this.stairNumber + " stairs";
     }
     return "the stairs";
+  }
+
+  onLeave(
+    forwardOrBackward: -1 | 1,
+    _isBeginningOfDirections: boolean,
+    entranceWasStraight: boolean
+  ): string {
+    // Set isBeginningOfDirections to true for onLeave so that it'll say
+    // "Turn right out of the [#] stairs"
+    return super.onLeave(forwardOrBackward, true, entranceWasStraight);
+  }
+
+  onArrive(forwardOrBackward: -1 | 1) {
+    return `continue, then ${dirToTurnString(
+      this.side * forwardOrBackward
+    )} into ${this.fullName}\n`;
   }
 }

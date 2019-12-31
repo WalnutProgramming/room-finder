@@ -40,7 +40,7 @@
     "build:types": "tsc --emitDeclarationOnly",
     "babel-compile": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
     "bundle": "rollup -c",
-    "prepare": "yarn build && yarn embedme README.md && yarn docs",
+    "prepare": "yarn build && yarn docs",
     "readme": "yarn embedme README.md",
     "docs": "yarn readme && yarn typedoc --out docs --mode file src"
   },

@@ -1,6 +1,7 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
 import { getGraph, getShortestPath } from "./graph";
+import { isLeftOrRight } from "./Direction";
 
 /**
  * This is the class that we use to define a building. (See `src/walnut.ts` for
@@ -119,18 +120,9 @@ export class Building {
         arr.indexOf(id2) > arr.indexOf(id1)
     );
     const maybeS = numFlights > 1 ? "s" : "";
-    return `Go ${
+    return `go ${
       goingUp ? "up" : "down"
     } ${numFlights} floor${maybeS} of stairs\n`;
-  }
-
-  protected getHallwayConnectionInstruction(id2: string): string {
-    const [hi2, i2] = this.getHallwayIndexAndIndexFromNode(id2);
-    if (this.hallways[hi2].name) {
-      return "Enter " + this.hallways[hi2].name + "\n";
-    } else {
-      return "";
-    }
   }
 
   /**
@@ -148,7 +140,11 @@ export class Building {
 
     // If there's only one hallway, we don't need to worry about nodes
     if (this.hallways.length === 1) {
-      return this.hallways[0].getDirectionsFromIndices(fromInd, toInd);
+      return this.hallways[0].getDirectionsFromIndices(fromInd, toInd, {
+        isBeginningOfDirections: true,
+        isEndOfDirections: true,
+        entranceWasStraight: false,
+      });
     }
 
     // Find IDs of the nodes (stairs or hallways) closest to these rooms
@@ -158,6 +154,8 @@ export class Building {
     const closestNodeToInd = this.hallways[toHallwayInd].idOfClosestNodeToIndex(
       toInd
     );
+
+    let entranceWasStraight = false;
 
     // Get the shortest path between the 2 nodes closest to the rooms
     const shortest = getShortestPath(
@@ -182,7 +180,12 @@ export class Building {
       ) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
-          prevInd
+          prevInd,
+          {
+            isBeginningOfDirections: directions === "",
+            isEndOfDirections: false,
+            entranceWasStraight,
+          }
         );
         const numStairFlights = Math.ceil(
           this.graph[shortest[i - 1]][shortest[i]]
@@ -195,20 +198,39 @@ export class Building {
         [currentHallwayInd, currentInd] = this.getHallwayIndexAndIndexFromNode(
           shortest[i]
         );
+        entranceWasStraight = true; // TODO
       } else if (hallwayInd !== currentHallwayInd /* it's a fork */) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
-          prevInd
+          prevInd,
+          {
+            isBeginningOfDirections: directions === "",
+            isEndOfDirections: false,
+            entranceWasStraight,
+          }
         );
-        directions += this.getHallwayConnectionInstruction(shortest[i]);
+        entranceWasStraight = !isLeftOrRight(
+          (<Room>this.hallways[currentHallwayInd].partList[prevInd]).side
+        );
         [currentHallwayInd, currentInd] = [hallwayInd, ind];
       }
     }
     directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
       currentInd,
-      toInd
+      toInd,
+      {
+        isBeginningOfDirections: directions === "",
+        isEndOfDirections: true,
+        entranceWasStraight,
+      }
     );
-    return directions;
+    // Capitalize first letter of each line
+    return directions
+      .trim()
+      .split("\n")
+      .filter(s => s !== "")
+      .map(s => s[0].toUpperCase() + s.slice(1))
+      .join("\n");
   }
 
   /**

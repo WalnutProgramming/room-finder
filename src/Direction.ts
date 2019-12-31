@@ -35,11 +35,11 @@ function dirToString(dir: Direction): string {
  * @param lowercase - Should the result start with a lowercase letter?
  * @returns "Go straight", "Turn left", or "Turn right"
  */
-function dirToTurnString(dir: Direction, lowercase: boolean = false): string {
+function dirToTurnString(dir: Direction): string {
   if (dir === Direction.FRONT || dir === Direction.BACK) {
-    return (lowercase ? "g" : "G") + "o straight";
+    return "go straight";
   } else {
-    return (lowercase ? "t" : "T") + "urn " + dirToString(dir);
+    return "turn " + dirToString(dir);
   }
 }
 

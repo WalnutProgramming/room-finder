@@ -10,7 +10,7 @@ export class Turn {
   onPass(forwardOrBackward: -1 | 1, prevRoom: Room | Turn): string {
     let ret = "";
     const direction = this.direction * forwardOrBackward;
-    ret += "Continue, then " + dirToTurnString(direction, true);
+    ret += "continue, then " + dirToTurnString(direction);
     if (prevRoom instanceof Room && isLeftOrRight(prevRoom.side)) {
       ret += ` (after passing ${prevRoom.fullName} on your ${dirToString(
         prevRoom.side * forwardOrBackward

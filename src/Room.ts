@@ -64,23 +64,56 @@ export class Room {
 
   /**
    *
-   * @param forwardOrBackward - Whether we're going forward or backward through this hallway
-   * @returns What we should say when we go out of this room
+   * @param forwardOrBackward - Whether we're going forward or backward through
+   * this hallway
+   * @param isBeginningOfDirections - Is this sentence the first sentence in the
+   * whole set of directions created in [[Building.getDirections]]?
+   * @param entranceWasStraight - When we entered this hallway, were we going
+   * straight (as opposed to turning left or right into this hallway)? (not
+   * applicable if isBeginningOfDirections is true; in this case, the argument
+   * is ignored)
+   * @returns What we should say when we go out of this room or hallway
    */
-  onLeave(forwardOrBackward: -1 | 1): string {
-    let ret = "";
-    if (isLeftOrRight(this.side)) {
+  onLeave(
+    forwardOrBackward: -1 | 1,
+    isBeginningOfDirections: boolean,
+    entranceWasStraight: boolean
+  ): string {
+    if (isBeginningOfDirections) {
+      let ret = "";
       ret += dirToTurnString(forwardOrBackward * this.side);
       if (this.fullName) ret += ` out of ${this.fullName}`;
       ret += "\n";
+      return ret;
+    } else if (entranceWasStraight) {
+      return (
+        dirToTurnString(forwardOrBackward * this.side).replace(
+          /^go /,
+          "continue "
+        ) + "\n"
+      );
+    } else if (isLeftOrRight(this.side)) {
+      return `, and then ${dirToTurnString(forwardOrBackward * this.side)}\n`;
+    } else {
+      return "";
     }
-    return ret;
   }
 
-  onArrive(forwardOrBackward: -1 | 1): string {
-    return `Continue, then ${dirToTurnString(
-      this.side * forwardOrBackward,
-      true
-    )} into ${this.fullName}\n`;
+  /**
+   *
+   * @param forwardOrBackward - Whether we're going forward or backward through
+   * this hallway
+   * @param isEndOfDirections - Is this sentence the last sentence in the whole
+   * in the whole set of directions created in [[Building.getDirections]]?
+   * @returns What we should say when we enter this room or hallway
+   */
+  onArrive(forwardOrBackward: -1 | 1, isEndOfDirections: boolean): string {
+    if (isLeftOrRight(this.side) || isEndOfDirections) {
+      return `continue, then ${dirToTurnString(
+        this.side * forwardOrBackward
+      )} into ${this.fullName}\n`;
+    } else {
+      return `continue, then after entering ${this.fullName}, `;
+    }
   }
 }

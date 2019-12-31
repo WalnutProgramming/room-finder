@@ -75,9 +75,29 @@ export class Hallway {
    * given the indices of the rooms in the hallway.
    * @param from - The index of the starting room
    * @param to - The index of the room to go to
+   * @param isBeginningOfDirections - Are these directions the first set of
+   * directions in the whole set of directions created in [[Building.getDirections]]?
+   * @param isEndOfDirections - Are these directions the last set of directions
+   * in the whole set of directions created in [[Building.getDirections]]?
+   * @param entranceWasStraight - When we entered this hallway, were we going
+   * straight (as opposed to turning left or right into this hallway)? (not
+   * applicable if isBeginningOfDirections is true; in this case, the argument
+   * is ignored)
    * @returns The directions. Steps are separated with newlines.
    */
-  getDirectionsFromIndices(from: number, to: number): string {
+  getDirectionsFromIndices(
+    from: number,
+    to: number,
+    {
+      isBeginningOfDirections,
+      isEndOfDirections,
+      entranceWasStraight,
+    }: {
+      isBeginningOfDirections: boolean;
+      isEndOfDirections: boolean;
+      entranceWasStraight: boolean;
+    }
+  ): string {
     const fromRoom = this.partList[from] as Room;
 
     const toRoom = this.partList[to] as Room;
@@ -89,7 +109,11 @@ export class Hallway {
     let ret = "";
     const forwardOrBackward = to > from ? 1 : -1;
 
-    ret += fromRoom.onLeave(forwardOrBackward);
+    ret += fromRoom.onLeave(
+      forwardOrBackward,
+      isBeginningOfDirections,
+      entranceWasStraight
+    );
 
     for (let i = from; i !== to; i += forwardOrBackward) {
       const current = this.partList[i];
@@ -101,7 +125,7 @@ export class Hallway {
       ret += current.onPass(forwardOrBackward, prevRoom as Room);
     }
 
-    ret += toRoom.onArrive(forwardOrBackward);
+    ret += toRoom.onArrive(forwardOrBackward, isEndOfDirections);
 
     return ret;
   }
