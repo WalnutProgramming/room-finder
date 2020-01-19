@@ -12,15 +12,18 @@
   ],
   "devDependencies": {
     "@babel/cli": "^7.7.7",
-    "@babel/core": "^7.7.7",
+    "@babel/core": "^7.8.3",
     "@babel/plugin-proposal-class-properties": "^7.7.4",
     "@babel/plugin-proposal-numeric-separator": "^7.7.4",
     "@babel/plugin-proposal-object-rest-spread": "^7.7.7",
-    "@babel/preset-env": "^7.7.7",
+    "@babel/preset-env": "^7.8.3",
     "@babel/preset-typescript": "^7.7.7",
     "@rollup/plugin-commonjs": "^11.0.0",
     "@rollup/plugin-node-resolve": "^6.0.0",
+    "@types/jest": "^24.9.0",
+    "babel-jest": "^24.9.0",
     "embedme": "^1.19.0",
+    "jest": "^24.9.0",
     "prettier": "^1.19.1",
     "rollup": "^1.27.13",
     "rollup-plugin-babel": "^4.3.3",
@@ -42,7 +45,8 @@
     "bundle": "rollup -c",
     "prepare": "yarn build && yarn docs",
     "readme": "yarn embedme README.md",
-    "docs": "yarn readme && yarn typedoc --out docs --mode file src"
+    "docs": "yarn readme && yarn typedoc --out docs --mode file src",
+    "test": "jest"
   },
   "prettier": {
     "trailingComma": "es5"
