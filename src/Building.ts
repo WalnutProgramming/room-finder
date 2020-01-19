@@ -249,12 +249,13 @@ export class Building {
    * `building.validity.valid` is true if the building passes a few validity
    * tests. This is useful for testing.
    *
-   * There are 3 reasons that it could be false:
-   * 1. There's at least one hallway that doesn't have any nodes (Forks or
+   * There are several reasons that it could be false:
+   * 1. There's more than one room with the same name.
+   * 2. There's at least one hallway that doesn't have any nodes (Forks or
    * Stairs) to connect it to the rest of the building.
-   * 2. The graph isn't connected (`connectedSections > 1`). That means there's
+   * 3. The graph isn't connected (`connectedSections > 1`). That means there's
    * a group of at least one node that isn't connected to the rest of the graph.
-   * 3. There are negative edge weights in the graph.
+   * 4. There are negative edge weights in the graph.
    *
    * If `building.validity.valid` is false, `building.validity.reason` gives
    * the reason why it's invalid.
@@ -268,6 +269,19 @@ export class Building {
     | { valid: true; connectedSections: string[][] }
     | { valid: false; reason: string; connectedSections: string[][] } {
     const connectedSections = isConnectedGraph(this.graph).connectedSections;
+
+    // More than one room can't have the same name
+    let ret = null;
+    this.roomsList.forEach((name, index) => {
+      if (this.roomsList.indexOf(name) !== index) {
+        ret = {
+          valid: false,
+          reason: `There's more than one room with the name '${name}'`,
+          connectedSections,
+        };
+      }
+    });
+    if (ret != null) return ret;
 
     // Edges can't have negative weights
     for (const [id1, obj] of Object.entries(this.graph)) {
