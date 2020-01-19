@@ -246,32 +246,65 @@ export class Building {
   }
 
   /**
-   * Is it possible to get from any room to any other room? This is useful for
-   * testing because if you made the building correctly, it should be true.
+   * `building.validity.valid` is true if the building passes a few validity
+   * tests. This is useful for testing.
    *
-   * There are 2 reasons that it could be false:
+   * There are 3 reasons that it could be false:
    * 1. There's at least one hallway that doesn't have any nodes (Forks or
    * Stairs) to connect it to the rest of the building.
    * 2. The graph isn't connected (`connectedSections > 1`). That means there's
    * a group of at least one node that isn't connected to the rest of the graph.
+   * 3. There are negative edge weights in the graph.
+   *
+   * If `building.validity.valid` is false, `building.validity.reason` gives
+   * the reason why it's invalid.
+   *
+   * `connectedSections` is a string[][], where each string[] is a list of nodes
+   * that are all connected. (Each string[] forms a connected graph.) This is
+   * useful for debugging to figure out which nodes aren't connected to the rest
+   * of the graph.
    */
-  get isConnected(): boolean {
-    if (this.hallways.length <= 1) {
-      return true;
-    } else if (!this.hallways.every(h => h.nodes.length >= 1)) {
-      return false;
-    } else {
-      return isConnectedGraph(this.graph).connected;
-    }
-  }
+  get validity():
+    | { valid: true; connectedSections: string[][] }
+    | { valid: false; reason: string; connectedSections: string[][] } {
+    const connectedSections = isConnectedGraph(this.graph).connectedSections;
 
-  /**
-   * Returns a string[][], where each string[] is a list of nodes that are all
-   * connected. (Each string[] forms a connected graph.) This is useful for
-   * debugging to figure out which nodes aren't connected to the rest of the
-   * graph.
-   */
-  get connectedSections(): string[][] {
-    return isConnectedGraph(this.graph).connectedSections;
+    // Edges can't have negative weights
+    for (const [id1, obj] of Object.entries(this.graph)) {
+      for (const [id2, edgeLen] of Object.entries(obj)) {
+        if (edgeLen < 0) {
+          return {
+            valid: false,
+            reason: `The edge from node '${id1}' to node '${id2}' has a negative weight`,
+            connectedSections,
+          };
+        }
+      }
+    }
+
+    // If there's more than 1 hallway, each hallway should have a node to
+    // connect it to the rest of the hallways
+    const indexOfHallwayWithNoNodes = this.hallways.findIndex(
+      h => h.nodes.length === 0
+    );
+    if (this.hallways.length > 1 && indexOfHallwayWithNoNodes !== -1) {
+      return {
+        valid: false,
+        reason: `The hallway at index ${indexOfHallwayWithNoNodes} has no nodes (Forks or Stairs)`,
+        connectedSections,
+      };
+    }
+
+    // Graph should be connected
+    if (!isConnectedGraph(this.graph).connected) {
+      return {
+        valid: false,
+        reason:
+          "Not all nodes are connected; see building.validity.connectedSections to find which node groups are separated",
+        connectedSections: isConnectedGraph(this.graph).connectedSections,
+      };
+    }
+
+    return { valid: true, connectedSections };
   }
 }
