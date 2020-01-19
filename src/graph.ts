@@ -1,7 +1,7 @@
 /// <reference path="../external-types/dijkstra.d.ts" />
 import dijkstra from "dijkstrajs";
 
-export { getGraph, getShortestPath };
+export { getGraph, getShortestPath, isConnectedGraph };
 
 /**
  * @ignore
@@ -74,4 +74,38 @@ function getShortestPath(
   idTo: string
 ): string[] {
   return dijkstra.find_path(graph, idFrom, idTo);
+}
+
+function isConnectedGraph(
+  graph: dijkstra.Graph
+): { connected: boolean; connectedSections: string[][] } {
+  const nodeIds: string[] = Object.keys(graph);
+
+  if (nodeIds.length === 0) {
+    return { connected: true, connectedSections: [] };
+  }
+
+  let traveled: string[] = [];
+  const travelOut = (nodeId: string) => {
+    if (!traveled.includes(nodeId)) {
+      traveled.push(nodeId);
+      if (Object.keys(graph).includes(nodeId)) {
+        for (const newNode of Object.keys(graph[nodeId])) {
+          travelOut(newNode);
+        }
+      }
+    }
+  };
+
+  const connectedSections: string[][] = [];
+  while (connectedSections.flat().length < nodeIds.length) {
+    const nextUntraveledNodeId = nodeIds.find(
+      s => !connectedSections.flat().includes(s)
+    )!;
+    traveled = [];
+    travelOut(nextUntraveledNodeId);
+    connectedSections.push(traveled);
+  }
+
+  return { connected: connectedSections.length === 1, connectedSections };
 }

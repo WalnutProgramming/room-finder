@@ -1,6 +1,6 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
-import { getGraph, getShortestPath } from "./graph";
+import { getGraph, getShortestPath, isConnectedGraph } from "./graph";
 import { isLeftOrRight } from "./Direction";
 
 /**
@@ -243,5 +243,35 @@ export class Building {
     return (
       typeof name === "string" && this.getHallwayIndexAndIndex(name) != null
     );
+  }
+
+  /**
+   * Is it possible to get from any room to any other room? This is useful for
+   * testing because if you made the building correctly, it should be true.
+   *
+   * There are 2 reasons that it could be false:
+   * 1. There's at least one hallway that doesn't have any nodes (Forks or
+   * Stairs) to connect it to the rest of the building.
+   * 2. The graph isn't connected (`connectedSections > 1`). That means there's
+   * a group of at least one node that isn't connected to the rest of the graph.
+   */
+  get isConnected(): boolean {
+    if (this.hallways.length <= 1) {
+      return true;
+    } else if (!this.hallways.every(h => h.nodes.length >= 1)) {
+      return false;
+    } else {
+      return isConnectedGraph(this.graph).connected;
+    }
+  }
+
+  /**
+   * Returns a string[][], where each string[] is a list of nodes that are all
+   * connected. (Each string[] forms a connected graph.) This is useful for
+   * debugging to figure out which nodes aren't connected to the rest of the
+   * graph.
+   */
+  get connectedSections(): string[][] {
+    return isConnectedGraph(this.graph).connectedSections;
   }
 }
