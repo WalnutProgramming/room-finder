@@ -4,6 +4,30 @@ import { getGraph, getShortestPath, isConnectedGraph } from "./graph";
 import { isLeftOrRight } from "./Direction";
 
 /**
+ * @ignore
+ * @param str - A string of instructions separated by newlines
+ * @param capitalize - Whether to capitalize the beginning of every line
+ * @param periods - Whether to add a period at the end of every instruction
+ * @return - A formatted version of str
+ */
+function format(
+  str: string,
+  capitalize: boolean = true,
+  periods: boolean = false
+) {
+  return str
+    .trim()
+    .split("\n")
+    .filter(s => s !== "")
+    .map(
+      s =>
+        (capitalize ? s[0].toUpperCase() + s.slice(1) : s) +
+        (periods ? "." : "")
+    )
+    .join("\n");
+}
+
+/**
  * This is the class that we use to define a building. (See `src/walnut.ts` for
  * a large example.)
  *
@@ -140,11 +164,13 @@ export class Building {
 
     // If there's only one hallway, we don't need to worry about nodes
     if (this.hallways.length === 1) {
-      return this.hallways[0].getDirectionsFromIndices(fromInd, toInd, {
-        isBeginningOfDirections: true,
-        isEndOfDirections: true,
-        entranceWasStraight: false,
-      });
+      return format(
+        this.hallways[0].getDirectionsFromIndices(fromInd, toInd, {
+          isBeginningOfDirections: true,
+          isEndOfDirections: true,
+          entranceWasStraight: false,
+        })
+      );
     }
 
     // Find IDs of the nodes (stairs or hallways) closest to these rooms
@@ -225,12 +251,7 @@ export class Building {
       }
     );
     // Capitalize first letter of each line
-    return directions
-      .trim()
-      .split("\n")
-      .filter(s => s !== "")
-      .map(s => s[0].toUpperCase() + s.slice(1))
-      .join("\n");
+    return format(directions);
   }
 
   /**
