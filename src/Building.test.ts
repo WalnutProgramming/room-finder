@@ -121,3 +121,62 @@ describe("Building.validity", () => {
     });
   });
 });
+
+describe("basic directions functionality", () => {
+  it("follows basic example in docs", () => {
+    // A Hallway has an array of Rooms. Each Room has a name and a side.
+    const hallway = new Hallway([
+      new Room("102", Direction.RIGHT),
+      new Room("103", Direction.LEFT),
+      new Room("104", Direction.RIGHT),
+      new Room("105", Direction.LEFT),
+      new Room("106", Direction.RIGHT),
+      // If you don't specify a side, the default is Direction.LEFT
+      new Room("107"),
+      new Room("108", Direction.RIGHT),
+      new Room("109", Direction.LEFT),
+    ]);
+
+    // A Building has an array of Hallways.
+    // In this case, there's only one Hallway in the Building.
+    const building = new Building([hallway]);
+
+    expect(building.getDirections("102", "109")).toMatchInlineSnapshot(`
+      "Turn right out of room 102
+      Continue, then turn left into room 109"
+    `);
+
+    expect(building.getDirections("107", "103")).toMatchInlineSnapshot(`
+      "Turn right out of room 107
+      Continue, then turn right into room 103"
+    `);
+  });
+
+  it("follows Turns correctly", () => {
+    const hallway = new Hallway([
+      new Room("102", Direction.RIGHT),
+      new Room("103", Direction.LEFT),
+      new Room("104", Direction.RIGHT),
+      new Room("105", Direction.LEFT),
+      new Turn(Direction.RIGHT),
+      new Room("106", Direction.RIGHT),
+      new Room("107"),
+      new Room("108", Direction.RIGHT),
+      new Room("109", Direction.LEFT),
+    ]);
+
+    const building = new Building([hallway]);
+
+    expect(building.getDirections("102", "109")).toMatchInlineSnapshot(`
+      "Turn right out of room 102
+      Continue, then turn right (after passing room 105 on your left)
+      Continue, then turn left into room 109"
+    `);
+
+    expect(building.getDirections("107", "103")).toMatchInlineSnapshot(`
+      "Turn right out of room 107
+      Continue, then turn left (after passing room 106 on your left)
+      Continue, then turn right into room 103"
+    `);
+  });
+});
