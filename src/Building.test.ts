@@ -179,4 +179,40 @@ describe("basic directions functionality", () => {
       Continue, then turn right into room 103"
     `);
   });
+
+  it("follows formatting options", () => {
+    const hallway = new Hallway([
+      new Room("102", Direction.RIGHT),
+      new Room("103", Direction.LEFT),
+      new Room("104", Direction.RIGHT),
+      new Room("105", Direction.LEFT),
+      new Room("106", Direction.RIGHT),
+      new Room("107"),
+      new Room("108", Direction.RIGHT),
+      new Room("109", Direction.LEFT),
+    ]);
+
+    // A Building has an array of Hallways.
+    // In this case, there's only one Hallway in the Building.
+    const building = new Building([hallway]);
+
+    expect(building.getDirections("102", "109", { periods: true }))
+      .toMatchInlineSnapshot(`
+      "Turn right out of room 102.
+      Continue, then turn left into room 109."
+    `);
+
+    expect(building.getDirections("102", "109", { capitalize: false }))
+      .toMatchInlineSnapshot(`
+      "turn right out of room 102
+      continue, then turn left into room 109"
+    `);
+
+    expect(
+      building.getDirections("102", "109", { periods: true, capitalize: false })
+    ).toMatchInlineSnapshot(`
+      "turn right out of room 102.
+      continue, then turn left into room 109."
+    `);
+  });
 });

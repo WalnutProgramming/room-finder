@@ -10,11 +10,7 @@ import { isLeftOrRight } from "./Direction";
  * @param periods - Whether to add a period at the end of every instruction
  * @return - A formatted version of str
  */
-function format(
-  str: string,
-  capitalize: boolean = true,
-  periods: boolean = false
-) {
+function format(str: string, { capitalize = true, periods = false }) {
   return str
     .trim()
     .split("\n")
@@ -154,9 +150,21 @@ export class Building {
    * to another in a building.
    * @param {string} from - The name of the starting room
    * @param {string} to - The name of the destination room
+   * @param capitalize - Whether to capitalize the beginning of every line
+   * @param periods - Whether to add a period at the end of every instruction
    * @return {string} The directions to get from room `from` to room `to`
    */
-  public getDirections(from: string, to: string): string {
+  public getDirections(
+    from: string,
+    to: string,
+    {
+      capitalize = true,
+      periods = false,
+    }: { capitalize?: boolean; periods?: boolean } = {
+      capitalize: true,
+      periods: false,
+    }
+  ): string {
     // Find the indices of the hallways of the rooms
     // and the indices of the rooms in the hallways
     const [fromHallwayInd, fromInd] = this.getHallwayIndexAndIndex(from)!;
@@ -169,7 +177,8 @@ export class Building {
           isBeginningOfDirections: true,
           isEndOfDirections: true,
           entranceWasStraight: false,
-        })
+        }),
+        { capitalize, periods }
       );
     }
 
@@ -251,7 +260,7 @@ export class Building {
       }
     );
     // Capitalize first letter of each line
-    return format(directions);
+    return format(directions, { capitalize, periods });
   }
 
   /**
