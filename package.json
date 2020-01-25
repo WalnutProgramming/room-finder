@@ -43,7 +43,8 @@
     "build:types": "tsc --emitDeclarationOnly",
     "babel-compile": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
     "bundle": "rollup -c",
-    "prepare": "yarn build && yarn docs",
+    "prep": "yarn build && yarn docs && yarn test",
+    "prepublishOnly": "yarn prep",
     "readme": "yarn embedme README.md",
     "docs": "yarn readme && yarn typedoc --out docs --mode file src",
     "test": "jest"
