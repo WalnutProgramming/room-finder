@@ -22,6 +22,7 @@
     "@rollup/plugin-node-resolve": "^7.0.0",
     "@types/jest": "^24.9.1",
     "babel-jest": "^25.1.0",
+    "copyfiles": "^2.2.0",
     "embedme": "^1.19.0",
     "jest": "^25.1.0",
     "prettier": "^1.19.1",
@@ -46,7 +47,7 @@
     "prep": "yarn build && yarn docs && yarn test",
     "prepublishOnly": "yarn prep",
     "readme": "yarn embedme README.md",
-    "docs": "yarn readme && yarn typedoc --out docs --mode file src",
+    "docs": "yarn readme && yarn typedoc --out docs --mode file src && copyfiles images/* docs",
     "test": "jest"
   },
   "prettier": {
