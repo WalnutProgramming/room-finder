@@ -2,7 +2,7 @@
   "name": "room-finder",
   "version": "0.0.8",
   "repository": "github:WalnutProgramming/room-finder",
-  "hompage": "https://walnutprogramming.github.io/room-finder/",
+  "homepage": "https://walnutprogramming.github.io/room-finder/",
   "license": "AGPL-3.0-only",
   "main": "./dist/index.js",
   "module": "./dist/module.js",
@@ -48,7 +48,7 @@
     "prep": "yarn build && yarn docs && yarn test",
     "prepublishOnly": "yarn prep",
     "readme": "yarn embedme README.md",
-    "docs": "yarn readme && yarn typedoc --out docs --mode file src && copyfiles images/* docs",
+    "docs": "yarn readme && yarn typedoc --out docs --mode file --exclude **/*.test.ts src && copyfiles images/* docs",
     "test": "jest"
   },
   "prettier": {

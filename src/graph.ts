@@ -76,6 +76,11 @@ function getShortestPath(
   return dijkstra.find_path(graph, idFrom, idTo);
 }
 
+/**
+ * @ignore
+ * @param graph - a graph
+ * @return - Is this a connected graph?
+ */
 function isConnectedGraph(
   graph: dijkstra.Graph
 ): { connected: boolean; connectedSections: string[][] } {
