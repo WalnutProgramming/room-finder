@@ -13,6 +13,7 @@ import { isLeftOrRight } from "./Direction";
 function format(str: string, { capitalize = true, periods = false }) {
   return str
     .trim()
+    .replace(/\n,/g, ",")
     .split("\n")
     .filter(s => s !== "")
     .map(

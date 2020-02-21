@@ -216,3 +216,38 @@ describe("basic directions functionality", () => {
     `);
   });
 });
+
+describe("transition phrasing", () => {
+  test("transitions between parallel hallways are phrased correctly", () => {
+    const building = new Building(
+      [
+        // hallway #1
+        new Hallway([
+          new Room("A", RIGHT),
+          new Room("B"),
+          new Fork(LEFT, "node1", "hallway #2"),
+        ]),
+        // hallway #2
+        new Hallway([
+          new Room("C", RIGHT),
+          new Fork(RIGHT, "node2", "hallway #1"),
+          new Room("D"),
+          new Room("E"),
+          new Fork(LEFT, "node3", "hallway #3"),
+        ]),
+        // hallway #3
+        new Hallway([new Room("F"), new Fork(RIGHT, "node4", "hallway #2")]),
+      ],
+      [
+        ["node1", "node2"],
+        ["node3", "node4"],
+      ]
+    );
+    expect(building.getDirections("A", "F")).toMatchInlineSnapshot(`
+      "Turn right out of room A
+      Continue, then turn left into hallway #2, and then turn right
+      Continue, then turn left into hallway #3, and then turn left
+      Continue, then turn right into room F"
+    `);
+  });
+});
