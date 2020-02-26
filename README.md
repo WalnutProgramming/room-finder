@@ -74,9 +74,11 @@ You can also directly include `room-finder` with a `<script>` tag by either [dow
 `RoomFinder` will be included as a global variable.
 
 ```html
-<script src="https://unpkg.com/room-finder@0.0.6"></script>
+<script src="https://unpkg.com/room-finder"></script>
 <!-- OR with jsDelivr: -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/room-finder@0.0.6/dist/index.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/room-finder/dist/index.min.js"></script> -->
+<!-- We highly recommend that you specify the version of room-number you want by 
+replacing "room-finder" with "room-finder@x.y.z" in either URL above. -->
 <script>
   console.log(
     new RoomFinder.Building([
