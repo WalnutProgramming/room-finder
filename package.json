@@ -2,7 +2,7 @@
   "name": "room-finder",
   "version": "0.0.10",
   "repository": "github:WalnutProgramming/room-finder",
-  "homepage": "https://walnutprogramming.github.io/room-finder/",
+  "homepage": "https://room-finder.walnut.direct/",
   "license": "AGPL-3.0-only",
   "main": "./dist/index.js",
   "module": "./dist/module.js",
