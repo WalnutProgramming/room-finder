@@ -1,0 +1,2 @@
+# Netlify: Redirect domain aliases to primary domain
+https://roomfinder.walnut.direct/* https://room-finder.walnut.direct/:splat 301!
