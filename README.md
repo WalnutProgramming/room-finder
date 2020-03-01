@@ -1,10 +1,26 @@
 # room-finder
 
-## Installation
+## The Problem
 
-### With `npm` or `yarn`
+The Walnut Hills Programming Club created this package while developing [Walnut.Direct](https://www.walnut.direct/), a web app to give students, parents, and visitors directions between rooms in Walnut Hills High School. For every possible pair of rooms in the school, we wanted to provide a set of clear, specific directions, and we didn't want to use GPS or sensors, since this would pose problems with both cost and location accuracy.
 
-You can use `npm` or `yarn` to install `room-finder` for use on either the frontend or on the backend with Node.
+Since we have too many rooms in our school to write every set of directions by hand, we needed a way to model our school so that we could generate directions from any room to any other room. Our solution was to model a building as a list of hallways, as well as a set of connections between hallways. After converting the hallways and connections into a graph data structure, we could apply Dijkstra's algorithm to find a path between any two nodes in the building.
+
+Using our JavaScript/TypeScript library, room-finder, you can apply our method to any other building. After you specify the hallways and connections, room-finder will automatically generate the graph, use Dijkstra's algorithm, and output a set of readable directions from any room to any other room. Our goal is to make room-finder a simple way for anyone with some JavaScript experience to intuitively create a model for a building without having to measure distances or install sensors to generate directions.
+
+We have tried to make our package very flexible. We support rooms with multiple names (aliases). You can modify edge lengths in the graph if room-finder's default route is too long. By extending our default classes, you can create hallways and rooms that output custom directions.
+
+If you have problems, feedback, or suggestions, please tell us by [creating an issue in GitHub](https://github.com/walnutprogramming/room-finder/issues). Pull requests are welcome.
+
+The full documentation is at [room-finder.walnut.direct](https://room-finder.walnut.direct/).
+
+## Installation and Getting Started
+
+You can use our library on a server or on any device that can run Node, but if you're creating a web app like [ours](https://github.com/WalnutProgramming/Directions), generating the model and directions on the frontend is unlikely to be a problem for performance.
+
+### With NPM or Yarn
+
+You can use NPM or Yarn to install `room-finder` for use on either the frontend or on the backend with Node.
 
 ```bash
 yarn add room-finder
