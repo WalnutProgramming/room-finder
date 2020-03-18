@@ -1,16 +1,25 @@
 import { Hallway } from "./Hallway";
-import { Room } from "./Room";
+import { ForkableRoom } from "./ForkableRoom";
 import { Fork } from "./Fork";
 import { Direction } from "./Direction";
+import { ForkNode } from "./ForkNode";
 
-export class SimpleHallway extends Hallway {
-  constructor(nodeId: string, partList: Room[], public hallwayName: string) {
+export class SimpleHallway<
+  ForkName extends string,
+  StairName extends string
+> extends Hallway<ForkName, StairName> {
+  constructor(
+    nodeId: ForkNode<ForkName>,
+    partList: ForkableRoom<ForkName>[],
+    public hallwayName: string
+  ) {
     super([new Fork(Direction.FRONT, nodeId, ""), ...partList]);
   }
 
   getDirectionsFromIndices(from: number, to: number) {
-    const toRoomName = (this.partList[to] as Room).fullName;
-    const fromRoomName = (this.partList[from] as Room).fullName;
+    const toRoomName = (this.partList[to] as ForkableRoom<ForkName>).fullName;
+    const fromRoomName = (this.partList[from] as ForkableRoom<ForkName>)
+      .fullName;
     if (from === 0) {
       // We're starting from the fork and going into the room
       return `Enter ${toRoomName}, which is in ${this.hallwayName}\n`;

@@ -1,7 +1,87 @@
 /// <reference path="../external-types/dijkstra.d.ts" />
 import dijkstra from "dijkstrajs";
+import { ForkNode, reverseConnection, ReversedConnection } from "./ForkNode";
+import { StairNode, onFloor } from "./StairNode";
 
-export { getGraph, getShortestPath, isConnectedGraph };
+function nodeToString<ForkName extends string, StairName extends string>(
+  nodeId: ForkNode<ForkName> | StairNode<StairName>
+): string {
+  if (typeof nodeId === "string") {
+    return nodeId;
+  } else if (isConnectionStairs(nodeId)) {
+    return `StairNode-----${nodeId.name}-----${nodeId.floor}`;
+  } else {
+    return `ReversedConnection-----${nodeId.name}`;
+  }
+}
+
+function stringToNode<ForkName extends string, StairName extends string>(
+  s: string
+): ForkNode<ForkName> | StairNode<StairName> {
+  const split = s.split("-----");
+  if (split.length < 2) {
+    return s as ForkName;
+  } else if (split[0] === "StairNode") {
+    return onFloor(split[1] as StairName, parseInt(split[2]));
+  } else {
+    return reverseConnection(split[1] as ForkName);
+  }
+}
+
+function getHallwayConnections<
+  ForkName extends string,
+  StairName extends string
+>(
+  hallConnections: {
+    nodeId: ForkNode<ForkName> | StairNode<StairName>;
+    edgeLengthFromPreviousNodeInHallway: number;
+  }[][]
+): [string, string][] {
+  return hallConnections
+    .flat()
+    .map(thing => thing.nodeId)
+    .filter(
+      (connection): connection is ForkName => typeof connection === "string"
+    )
+    .map(forkName => [
+      nodeToString(forkName),
+      nodeToString(reverseConnection(forkName)),
+    ]);
+}
+
+/**
+ * @param id1
+ * @param id2
+ * @return Is the connection between these two nodes
+ * a Stairs connection? (as opposed to a Fork)
+ */
+export function isConnectionStairs<
+  ForkName extends string,
+  StairName extends string
+>(
+  node: ForkNode<ForkName> | StairNode<StairName>
+): node is StairNode<StairName> {
+  return typeof node === "object" && node._type === "StairNode";
+}
+
+function getStairConnections<ForkName extends string, StairName extends string>(
+  hallConnections: {
+    nodeId: ForkNode<ForkName> | StairNode<StairName>;
+    edgeLengthFromPreviousNodeInHallway: number;
+  }[][]
+): string[][] {
+  const stairNodes = hallConnections
+    .flat()
+    .map(thing => thing.nodeId)
+    .filter(isConnectionStairs);
+  const staircases = [...new Set(stairNodes.map(node => node.name))];
+  return staircases.map(name =>
+    stairNodes
+      .filter(node => node.name === name)
+      .sort((a, b) => b.floor - a.floor)
+      .map(nodeToString)
+  );
+}
 
 /**
  * @ignore
@@ -11,14 +91,21 @@ export { getGraph, getShortestPath, isConnectedGraph };
  * @param hallwayConnections - an array of the pairs of connected hallway nodes
  * @returns The graph to be used by getShortestPath
  */
-function getGraph(
-  hallConnectors: {
-    nodeId: string;
+export function getGraph<ForkName extends string, StairName extends string>(
+  hallConnectorsStructures: {
+    nodeId: ForkNode<ForkName> | StairNode<StairName>;
     edgeLengthFromPreviousNodeInHallway: number;
-  }[][],
-  stairConnections: string[][],
-  hallwayConnections: [string, string][]
+  }[][]
 ) {
+  const hallConnectors = hallConnectorsStructures.map(hall =>
+    hall.map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
+      nodeId: nodeToString(nodeId),
+      edgeLengthFromPreviousNodeInHallway,
+    }))
+  );
+  const stairConnections = getStairConnections(hallConnectorsStructures);
+  const hallwayConnections = getHallwayConnections(hallConnectorsStructures);
+
   const graph: dijkstra.Graph = {};
   hallConnectors.forEach(hall => {
     return hall.forEach((node, ind) => {
@@ -68,12 +155,17 @@ function getGraph(
  * @returns An array of node IDs that represents the path from `idFrom` to
  * `idTo`.
  */
-function getShortestPath(
+export function getShortestPath<
+  ForkName extends string,
+  StairName extends string
+>(
   graph: dijkstra.Graph,
-  idFrom: string,
-  idTo: string
-): string[] {
-  return dijkstra.find_path(graph, idFrom, idTo);
+  idFrom: ForkNode<ForkName> | StairNode<StairName>,
+  idTo: ForkNode<ForkName> | StairNode<StairName>
+): (ForkNode<ForkName> | StairNode<StairName>)[] {
+  return dijkstra
+    .find_path(graph, nodeToString(idFrom), nodeToString(idTo))
+    .map(nodeStr => stringToNode(nodeStr));
 }
 
 /**
@@ -81,7 +173,7 @@ function getShortestPath(
  * @param graph - a graph
  * @return - Is this a connected graph?
  */
-function isConnectedGraph(
+export function isConnectedGraph(
   graph: dijkstra.Graph
 ): { connected: boolean; connectedSections: string[][] } {
   const nodeIds: string[] = Object.keys(graph);

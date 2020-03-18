@@ -1,12 +1,15 @@
-import { Room } from "./Room";
+import { ForkableRoom } from "./ForkableRoom";
 import { Turn } from "./Turn";
+import { Stairs } from "./Stairs";
+import { ForkNode } from "./ForkNode";
+import { StairNode } from "./StairNode";
 
 /**
  * This class represents a single hallway. The hallway may have turns,
  * but if you need a fork, you need to add another [[Hallway]] to the list
  * and connect them with 2 [[Fork]]s.
  */
-export class Hallway {
+export class Hallway<ForkName extends string, StairName extends string> {
   /**
    *
    * @param partList - An array of every [[Room]] or [[Turn]] in the hallway.
@@ -15,7 +18,10 @@ export class Hallway {
    * consistent with the direction you choose as forward.
    * @param name - The name of this [[Hallway]].
    */
-  constructor(public partList: (Room | Turn)[], public name?: string | null) {}
+  constructor(
+    public partList: (ForkableRoom<ForkName> | Stairs<StairName> | Turn)[],
+    public name?: string | null
+  ) {}
 
   /**
    * @param - name The name of the room
@@ -36,12 +42,14 @@ export class Hallway {
    * @param roomInd - The index of the room in the hallway
    * @returns The id of the "closest" node to the room in the hallway
    */
-  idOfClosestNodeToIndex(roomInd: number): string {
+  idOfClosestNodeToIndex(
+    roomInd: number
+  ): ForkNode<ForkName> | StairNode<StairName> {
     let closestNodeInd: number;
     this.partList.forEach((r, currentInd) => {
       if (
         "nodeId" in r &&
-        r.nodeId &&
+        r.nodeId != null &&
         (closestNodeInd === undefined ||
           Math.abs(currentInd - roomInd) < Math.abs(closestNodeInd - roomInd))
       ) {
@@ -49,20 +57,23 @@ export class Hallway {
       }
     });
 
-    const closest = this.partList[closestNodeInd!];
-    return (closest as Room).nodeId!;
+    const closest = this.partList[closestNodeInd!] as
+      | ForkableRoom<ForkName>
+      | Stairs<StairName>;
+    return closest.nodeId!;
   }
 
   get nodes(): {
-    nodeId: string;
+    nodeId: ForkNode<ForkName> | StairNode<StairName>;
     edgeLengthFromPreviousNodeInHallway: number;
   }[] {
     return this.partList
       .filter(
-        (r): r is Room & { nodeId: string } => "nodeId" in r && r.nodeId != null
+        (r): r is ForkableRoom<ForkName> | Stairs<StairName> =>
+          "nodeId" in r && r.nodeId != null
       )
       .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
-        nodeId,
+        nodeId: nodeId!,
         edgeLengthFromPreviousNodeInHallway:
           edgeLengthFromPreviousNodeInHallway == null
             ? 1
@@ -98,9 +109,13 @@ export class Hallway {
       entranceWasStraight: boolean;
     }
   ): string {
-    const fromRoom = this.partList[from] as Room;
+    const fromRoom = this.partList[from] as
+      | ForkableRoom<ForkName>
+      | Stairs<StairName>;
 
-    const toRoom = this.partList[to] as Room;
+    const toRoom = this.partList[to] as
+      | ForkableRoom<ForkName>
+      | Stairs<StairName>;
 
     if (from === to) {
       return `Bruh. You at ${fromRoom.fullName}\n`;
@@ -122,7 +137,10 @@ export class Hallway {
         prevInd >= 0 &&
         prevInd < this.partList.length &&
         this.partList[i - forwardOrBackward];
-      ret += current.onPass(forwardOrBackward, prevRoom as Room);
+      ret += current.onPass(
+        forwardOrBackward,
+        prevRoom as ForkableRoom<ForkName> | Stairs<StairName>
+      );
     }
 
     ret += toRoom.onArrive(forwardOrBackward, isEndOfDirections);

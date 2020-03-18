@@ -1,5 +1,6 @@
 import { Direction } from "./Direction";
-import { Room } from "./Room";
+import { ForkableRoom } from "./ForkableRoom";
+import { ForkNode } from "./ForkNode";
 
 /**
  * A Fork represents a connection between 2 [[Hallway]]s on the same
@@ -7,7 +8,7 @@ import { Room } from "./Room";
  * adding to the `hallwayConnections` argument of the [[Hallway]]
  * constructor.
  */
-export class Fork extends Room {
+export class Fork<ForkName extends string> extends ForkableRoom<ForkName> {
   /**
    *
    * @param side - The side of the [[Hallway]] that this [[Fork]] is on
@@ -21,7 +22,7 @@ export class Fork extends Room {
    */
   constructor(
     side: Direction,
-    nodeId: string,
+    nodeId: ForkNode<ForkName>,
     public destinationName: string,
     edgeLengthFromPreviousNodeInHallway: number | undefined = 1
   ) {
