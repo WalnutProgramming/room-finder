@@ -9,6 +9,8 @@ import {
   Turn,
   reverseConnection,
   onFloor,
+  isValidBuilding,
+  assertValidBuilding,
 } from ".";
 
 const { RIGHT, LEFT, BACK, FRONT } = Direction;
@@ -300,61 +302,72 @@ describe("Building.validity", () => {
   it("marks valid buildings correctly", () => {
     const valid = expect.objectContaining({ valid: true });
 
+    const b = new Building([new Hallway([new Room("a"), new Room("b")])]);
+    expect(isValidBuilding(b)).toEqual(valid);
+    assertValidBuilding(b);
+
     expect(
-      new Building([new Hallway([new Room("a"), new Room("b")])]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([
+            new Room("a"),
+            new Room("b"),
+            new Turn(RIGHT),
+            new Fork(LEFT, "a", ""),
+          ]),
+        ])
+      )
     ).toEqual(valid);
 
     expect(
-      new Building([
-        new Hallway([
-          new Room("a"),
-          new Room("b"),
-          new Turn(RIGHT),
-          new Fork(LEFT, "a", ""),
-        ]),
-      ]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
+          new Hallway([
+            new Room("z"),
+            new Fork(RIGHT, reverseConnection("a"), ""),
+          ]),
+        ])
+      )
     ).toEqual(valid);
 
     expect(
-      new Building([
-        new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-        new Hallway([
-          new Room("z"),
-          new Fork(RIGHT, reverseConnection("a"), ""),
-        ]),
-      ]).validity
-    ).toEqual(valid);
-
-    expect(
-      new Building([
-        new Hallway([
-          new Room("a"),
-          new Room("b"),
-          new Stairs(LEFT, onFloor("a", 2)),
-        ]),
-        new Hallway([new Room("z"), new Stairs(RIGHT, onFloor("a", 1))]),
-      ]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([
+            new Room("a"),
+            new Room("b"),
+            new Stairs(LEFT, onFloor("a", 2)),
+          ]),
+          new Hallway([new Room("z"), new Stairs(RIGHT, onFloor("a", 1))]),
+        ])
+      )
     ).toEqual(valid);
   });
 
   it("marks buildings with duplicated names as invalid", () => {
-    expect(
-      new Building([new Hallway([new Room("a"), new Room("a")])]).validity
-    ).toEqual({
+    const b = new Building([new Hallway([new Room("a"), new Room("a")])]);
+
+    expect(isValidBuilding(b)).toEqual({
       valid: false,
       reason: "There's more than one room with the name 'a'",
       connectedSections: [],
     });
+    expect(() => {
+      assertValidBuilding(b);
+    }).toThrow("There's more than one room with the name 'a'");
 
     expect(
-      new Building([
-        new Hallway([
-          new Room("a"),
-          new Room("b"),
-          new Stairs(LEFT, onFloor("c", 4)),
-        ]),
-        new Hallway([new Room("a"), new Stairs(RIGHT, onFloor("b", 1))]),
-      ]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([
+            new Room("a"),
+            new Room("b"),
+            new Stairs(LEFT, onFloor("c", 4)),
+          ]),
+          new Hallway([new Room("a"), new Stairs(RIGHT, onFloor("b", 1))]),
+        ])
+      )
     ).toEqual(
       expect.objectContaining({
         valid: false,
@@ -365,14 +378,16 @@ describe("Building.validity", () => {
 
   it("marks buildings with negative weights as invalid", () => {
     expect(
-      new Building([
-        new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-        new Hallway([
-          new Fork(RIGHT, "f", ""),
-          new Room("z"),
-          new Fork(RIGHT, reverseConnection("a"), "", -2),
-        ]),
-      ]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
+          new Hallway([
+            new Fork(RIGHT, "f", ""),
+            new Room("z"),
+            new Fork(RIGHT, reverseConnection("a"), "", -2),
+          ]),
+        ])
+      )
     ).toEqual(
       expect.objectContaining({
         valid: false,
@@ -383,15 +398,17 @@ describe("Building.validity", () => {
 
   it("marks buildings with no nodes in a Hallway as invalid", () => {
     expect(
-      new Building([
-        new Hallway([
-          new Room("a"),
-          new Room("b"),
-          new Fork(LEFT, reverseConnection("b"), ""),
-        ]),
-        new Hallway([new Room("z"), new Fork(RIGHT, "b", "")]),
-        new Hallway([new Room("c"), new Room("d")]),
-      ]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([
+            new Room("a"),
+            new Room("b"),
+            new Fork(LEFT, reverseConnection("b"), ""),
+          ]),
+          new Hallway([new Room("z"), new Fork(RIGHT, "b", "")]),
+          new Hallway([new Room("c"), new Room("d")]),
+        ])
+      )
     ).toEqual(
       expect.objectContaining({
         valid: false,
@@ -402,19 +419,21 @@ describe("Building.validity", () => {
 
   it("marks buildings with disconnected graphs as invalid", () => {
     expect(
-      new Building([
-        new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-        new Hallway([
-          new Room("z"),
-          new Fork(RIGHT, reverseConnection("b"), ""),
-        ]),
-        new Hallway([new Room("c"), new Fork(RIGHT, "8", "")]),
-      ]).validity
+      isValidBuilding(
+        new Building([
+          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
+          new Hallway([
+            new Room("z"),
+            new Fork(RIGHT, reverseConnection("b"), ""),
+          ]),
+          new Hallway([new Room("c"), new Fork(RIGHT, "8", "")]),
+        ])
+      )
     ).toEqual(
       expect.objectContaining({
         valid: false,
         reason:
-          "Not all nodes are connected; see building.validity.connectedSections to find which node groups are separated",
+          "Not all nodes are connected; see isValidBuilding(building).connectedSections to find which node groups are separated.",
       })
     );
   });

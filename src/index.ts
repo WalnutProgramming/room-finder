@@ -14,6 +14,7 @@ export { Stairs } from "./Stairs";
 export { Turn } from "./Turn";
 export { reverseConnection } from "./ForkNode";
 export { onFloor } from "./StairNode";
+export { assertValidBuilding, isValidBuilding } from "./buildingValidity";
 
 // We can't directly re-export types because Babel's
 // TypeScript uses --isolatedModules.
