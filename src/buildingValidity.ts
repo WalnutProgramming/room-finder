@@ -1,5 +1,11 @@
 import { Building } from "./Building";
-import { isConnectedGraph } from "./graph";
+import {
+  isConnectedGraph,
+  isConnectionStairs,
+  isReverseConnection,
+} from "./graph";
+import { Turn } from "./Turn";
+import { Direction } from "./Direction";
 
 /**
  * `building.validity.valid` is true if the building passes a few validity
@@ -32,7 +38,11 @@ export function isValidBuilding<
   const connectedSections = isConnectedGraph(b.graph).connectedSections;
 
   // More than one room can't have the same name
-  let ret = null;
+  let ret: {
+    valid: false;
+    reason: string;
+    connectedSections: string[][];
+  } | null = null;
   b.roomsList.forEach((name, index) => {
     if (b.roomsList.indexOf(name) !== index) {
       ret = {
@@ -57,6 +67,104 @@ export function isValidBuilding<
     }
   }
 
+  // shouldn't have duplicated or unmatched nodes
+  const allNodes = b.hallways.flatMap(h => h.nodes).map(({ nodeId }) => nodeId);
+  for (const nodeId of allNodes) {
+    if (isConnectionStairs(nodeId)) {
+      const sameStaircase = allNodes
+        .filter(isConnectionStairs)
+        .filter(nodeId2 => nodeId2.name === nodeId.name);
+      const same = sameStaircase.filter(
+        nodeId2 => nodeId2.floor === nodeId.floor
+      );
+      if (same.length > 1) {
+        return {
+          valid: false,
+          reason: `There's more than one Stairs node with the name onFloor('${nodeId.name}', ${nodeId.floor}). One of the Stairs in the staircase should probably be on a different floor.`,
+          connectedSections,
+        };
+      }
+      if (sameStaircase.length === 1) {
+        return {
+          valid: false,
+          reason:
+            `There are Stairs with the nodeId onFloor('${nodeId.name}', ${nodeId.floor}) with no corresponding Stairs on a different floor. ` +
+            "You need to either add Stairs somewhere else with the same name and a different floor, or remove this node.",
+          connectedSections,
+        };
+      }
+    } else if (typeof nodeId === "string") {
+      const same = allNodes.filter(nodeId2 => nodeId2 === nodeId);
+      if (same.length > 1) {
+        return {
+          valid: false,
+          reason: `There's more than one Fork with the nodeId '${nodeId}'. One of them should probably be a reverseConnection.`,
+          connectedSections,
+        };
+      }
+      const reversed = allNodes
+        .filter(isReverseConnection)
+        .filter(({ name }) => name === nodeId);
+      if (reversed.length === 0) {
+        return {
+          valid: false,
+          reason:
+            `There's a Fork with the nodeId '${nodeId}' that doesn't have a reverseConnection. ` +
+            `You need to either add a Fork somewhere else with the nodeId reverseConnection('${nodeId}') to connect it to this node, or remove this node.`,
+          connectedSections,
+        };
+      }
+    } else {
+      const same = allNodes
+        .filter(isReverseConnection)
+        .filter(({ name }) => name === nodeId.name);
+      if (same.length > 1) {
+        return {
+          valid: false,
+          reason: `There's more than one Fork with the nodeId reverseConnection('${nodeId.name}'). One of them should probably not be a reverseConnection.`,
+          connectedSections,
+        };
+      }
+      const forward = allNodes
+        .filter((node): node is ForkName => typeof node === "string")
+        .filter(node => node === nodeId.name);
+      if (forward.length === 0) {
+        return {
+          valid: false,
+          reason:
+            `There's a Fork with the nodeId reverseConnection('${nodeId.name}') that doesn't have a regular connection. ` +
+            `You need to either add a Fork somewhere else with the nodeId '${nodeId.name}' to connect it to this node, or remove this node.`,
+          connectedSections,
+        };
+      }
+    }
+  }
+
+  // rooms marked BACK are in the back and rooms marked FRONT are in the front
+  b.hallways.forEach((hallway, hallwayIndex) => {
+    hallway.partList.forEach((part, partIndex) => {
+      if (!(part instanceof Turn) && ret == null) {
+        if (partIndex !== 0 && part.side === Direction.BACK) {
+          ret = {
+            valid: false,
+            reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side BACK, but it is not the first element of the hallway`,
+            connectedSections,
+          };
+        } else if (
+          partIndex !== hallway.partList.length - 1 &&
+          part.side === Direction.FRONT
+        ) {
+          ret = {
+            valid: false,
+            reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side FRONT, but it is not the last element of the hallway`,
+            connectedSections,
+          };
+        }
+      }
+    });
+  });
+  if (ret != null) return ret;
+
   // If there's more than 1 hallway, each hallway should have a node to
   // connect it to the rest of the hallways
   const indexOfHallwayWithNoNodes = b.hallways.findIndex(
@@ -65,7 +173,7 @@ export function isValidBuilding<
   if (b.hallways.length > 1 && indexOfHallwayWithNoNodes !== -1) {
     return {
       valid: false,
-      reason: `The hallway at index ${indexOfHallwayWithNoNodes} has no nodes (Forks or Stairs)`,
+      reason: `The hallway at index ${indexOfHallwayWithNoNodes} has no nodes (Forks or Stairs) to connect it to the rest of the building.`,
       connectedSections,
     };
   }
@@ -79,6 +187,26 @@ export function isValidBuilding<
       connectedSections: isConnectedGraph(b.graph).connectedSections,
     };
   }
+
+  // no Turns at the front or back of Hallways
+  b.hallways.forEach(({ partList }, hallwayIndex) => {
+    if (ret == null) {
+      if (partList[0] instanceof Turn) {
+        ret = {
+          valid: false,
+          reason: `There first element of the Hallway at position ${hallwayIndex} is a Turn. There is no reason to include a Turn here because it will never be passed.`,
+          connectedSections,
+        };
+      } else if (partList[partList.length - 1] instanceof Turn) {
+        ret = {
+          valid: false,
+          reason: `There last element of the Hallway at position ${hallwayIndex} is a Turn. There is no reason to include a Turn here because it will never be passed.`,
+          connectedSections,
+        };
+      }
+    }
+  });
+  if (ret != null) return ret;
 
   return { valid: true, connectedSections };
 }

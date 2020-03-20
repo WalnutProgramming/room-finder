@@ -64,6 +64,15 @@ export function isConnectionStairs<
   return typeof node === "object" && node._type === "StairNode";
 }
 
+export function isReverseConnection<
+  ForkName extends string,
+  StairName extends string
+>(
+  nodeId2: ForkNode<ForkName> | StairNode<StairName>
+): nodeId2 is ReversedConnection<ForkName> {
+  return typeof nodeId2 !== "string" && !isConnectionStairs(nodeId2);
+}
+
 function getStairConnections<ForkName extends string, StairName extends string>(
   hallConnections: {
     nodeId: ForkNode<ForkName> | StairNode<StairName>;
