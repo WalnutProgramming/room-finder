@@ -9,8 +9,6 @@ import {
   reverseConnection,
   onFloor,
 } from ".";
-import { getConnection } from "./ForkNode";
-import { nodeToString } from "./node";
 
 const { RIGHT, LEFT, BACK, FRONT } = Direction;
 
@@ -132,6 +130,61 @@ describe("hallways with forks", () => {
       Continue, then after entering the first hallway, turn right
       Continue, then turn left into room 11"
     `);
+  });
+
+  test("adding a Fork or Stairs doesn't affect the directions within a single hallway", () => {
+    const b1 = new Building([
+      // hallway 1
+      new Hallway([
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Room("13"),
+        new Room("14"),
+      ]),
+    ]);
+
+    const b2 = new Building([
+      // hallway 1
+      new Hallway([
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Room("13"),
+        new Room("14"),
+        new Fork(LEFT, "fork1", "the second hallway"),
+      ]),
+
+      // hallway 2
+      new Hallway([
+        new Fork(BACK, reverseConnection("fork1"), "the first hallway"),
+        new Room("21"),
+        new Room("22"),
+      ]),
+    ]);
+
+    const b3 = new Building([
+      // hallway 1
+      new Hallway([
+        new Stairs(RIGHT, onFloor("a", 1)),
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Room("13"),
+        new Room("14"),
+        new Stairs(LEFT, onFloor("b", 1)),
+      ]),
+
+      // hallway 2
+      new Hallway([
+        new Stairs(RIGHT, onFloor("a", 2)),
+        new Room("21"),
+        new Room("22"),
+        new Stairs(LEFT, onFloor("b", 2)),
+      ]),
+    ]);
+
+    expect(b1.getDirections("11", "13")).toEqual(b2.getDirections("11", "13"));
+    expect(b1.getDirections("11", "13")).toEqual(b3.getDirections("11", "13"));
+    expect(b1.getDirections("14", "11")).toEqual(b2.getDirections("14", "11"));
+    expect(b1.getDirections("14", "11")).toEqual(b3.getDirections("14", "11"));
   });
 
   it("works with 2 forks", () => {

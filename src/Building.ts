@@ -6,6 +6,17 @@ import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
 import { nodeToString } from "./node";
 
+function areConnectedStairs<StairName extends string>(
+  id1: ForkNode<string> | StairNode<StairName>,
+  id2: ForkNode<string> | StairNode<StairName>
+): boolean {
+  return (
+    id1 instanceof StairNode &&
+    id2 instanceof StairNode &&
+    id1.name === id2.name
+  );
+}
+
 /**
  * @ignore
  * @param str - A string of instructions separated by newlines
@@ -198,7 +209,12 @@ export class Building<
       const [prevHallwayInd, prevInd] = this.getHallwayIndexAndIndexFromNode(
         shortest[i - 1]
       );
-      if (shortest[i] instanceof StairNode /* going up or down stairs */) {
+      if (
+        areConnectedStairs(
+          shortest[i - 1],
+          shortest[i]
+        ) /* going up or down stairs */
+      ) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
           prevInd,
