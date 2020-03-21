@@ -1,14 +1,22 @@
-export interface ReversedConnection<ForkName extends string> {
-  readonly _type: "ReversedConnection";
-  readonly name: ForkName;
+export class ForkNode<ForkName extends string> {
+  readonly _type = "ForkNode";
+  constructor(readonly name: ForkName, readonly reversed: boolean) {}
 }
 
 export function reverseConnection<ForkName extends string>(
-  name: ForkName
+  node: ForkName | ForkNode<ForkName>
 ): ForkNode<ForkName> {
-  return { _type: "ReversedConnection", name };
+  return typeof node === "string"
+    ? new ForkNode(node, true)
+    : new ForkNode(node.name, !node.reversed);
 }
 
-export type ForkNode<ForkName extends string> =
-  | ReversedConnection<ForkName>
-  | ForkName;
+export function getConnection<ForkName extends string>(
+  thing: ForkName | ForkNode<ForkName>
+): ForkNode<ForkName> {
+  if (thing instanceof ForkNode) {
+    return thing;
+  } else {
+    return new ForkNode(thing, false);
+  }
+}

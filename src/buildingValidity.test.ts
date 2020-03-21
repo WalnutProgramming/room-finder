@@ -162,7 +162,7 @@ describe("Building.validity", () => {
       expect.objectContaining({
         valid: false,
         reason:
-          "There's a Fork with the nodeId 'a' that doesn't have a reverseConnection. " +
+          "There's a Fork with the nodeId 'a' that doesn't have a corresponding reverseConnection. " +
           "You need to either add a Fork somewhere else with the nodeId reverseConnection('a') to connect it to this node, or remove this node.",
       })
     );
@@ -181,7 +181,7 @@ describe("Building.validity", () => {
       expect.objectContaining({
         valid: false,
         reason:
-          "There's a Fork with the nodeId reverseConnection('a') that doesn't have a regular connection. " +
+          "There's a Fork with the nodeId reverseConnection('a') that doesn't have a corresponding regular connection. " +
           "You need to either add a Fork somewhere else with the nodeId 'a' to connect it to this node, or remove this node.",
       })
     );
@@ -327,7 +327,7 @@ describe("Building.validity", () => {
     ).toEqual(
       expect.objectContaining({
         valid: false,
-        reason: `The edge from node 'f' to node 'ReversedConnection-----a' has a negative weight`,
+        reason: `The edge from node 'f' to node reverseConnection('a') has a negative weight`,
       })
     );
   });

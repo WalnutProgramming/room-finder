@@ -1,6 +1,7 @@
 import { ForkableRoom } from "./ForkableRoom";
 import { dirToString, dirToTurnString, isLeftOrRight } from "./Direction";
 import { HallwayElement } from "./HallwayElement";
+import { Room } from "./Room";
 
 /**
  * This class represents a turn in a single [[Hallway]].
@@ -12,7 +13,10 @@ export class Turn {
     let ret = "";
     const direction = this.direction * forwardOrBackward;
     ret += "continue, then " + dirToTurnString(direction);
-    if (prevRoom instanceof ForkableRoom && isLeftOrRight(prevRoom.side)) {
+    if (
+      prevRoom instanceof ForkableRoom ||
+      (prevRoom instanceof Room && isLeftOrRight(prevRoom.side))
+    ) {
       ret += ` (after passing ${prevRoom.fullName} on your ${dirToString(
         prevRoom.side * forwardOrBackward
       )})`;

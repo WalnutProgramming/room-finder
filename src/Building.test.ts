@@ -10,6 +10,8 @@ import {
   reverseConnection,
   onFloor,
 } from ".";
+import { getConnection } from "./ForkNode";
+import { nodeToString } from "./node";
 
 const { RIGHT, LEFT, BACK, FRONT } = Direction;
 
@@ -277,7 +279,7 @@ it("works with multiple forks and stairs", () => {
       new Room("221"),
       new Room("222"),
       new Stairs(LEFT, onFloor("stair-b", 2)),
-      new Fork(FRONT, reverseConnection("fork1"), "the 21s"),
+      new Fork(FRONT, "fork1", "the 21s"),
     ]),
 
     // hallway 31 (on 3rd floor)
@@ -294,6 +296,8 @@ it("works with multiple forks and stairs", () => {
       new Room("322"),
     ]),
   ]);
+
+  //TODO: finish
 });
 
 describe("correct transition phrasing", () => {

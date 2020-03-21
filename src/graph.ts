@@ -1,32 +1,8 @@
 /// <reference path="../external-types/dijkstra.d.ts" />
 import dijkstra from "dijkstrajs";
-import { ForkNode, reverseConnection, ReversedConnection } from "./ForkNode";
+import { ForkNode, reverseConnection } from "./ForkNode";
 import { StairNode, onFloor } from "./StairNode";
-
-function nodeToString<ForkName extends string, StairName extends string>(
-  nodeId: ForkNode<ForkName> | StairNode<StairName>
-): string {
-  if (typeof nodeId === "string") {
-    return nodeId;
-  } else if (isConnectionStairs(nodeId)) {
-    return `StairNode-----${nodeId.name}-----${nodeId.floor}`;
-  } else {
-    return `ReversedConnection-----${nodeId.name}`;
-  }
-}
-
-function stringToNode<ForkName extends string, StairName extends string>(
-  s: string
-): ForkNode<ForkName> | StairNode<StairName> {
-  const split = s.split("-----");
-  if (split.length < 2) {
-    return s as ForkName;
-  } else if (split[0] === "StairNode") {
-    return onFloor(split[1] as StairName, parseInt(split[2]));
-  } else {
-    return reverseConnection(split[1] as ForkName);
-  }
-}
+import { nodeToString, nodeFromString } from "./node";
 
 function getHallwayConnections<
   ForkName extends string,
@@ -41,36 +17,14 @@ function getHallwayConnections<
     .flat()
     .map(thing => thing.nodeId)
     .filter(
-      (connection): connection is ForkName => typeof connection === "string"
+      (connection): connection is ForkNode<ForkName> =>
+        connection instanceof ForkNode
     )
-    .map(forkName => [
-      nodeToString(forkName),
-      nodeToString(reverseConnection(forkName)),
+    .filter(connection => !connection.reversed)
+    .map(forkNode => [
+      nodeToString(forkNode),
+      nodeToString(reverseConnection(forkNode.name)),
     ]);
-}
-
-/**
- * @param id1
- * @param id2
- * @return Is the connection between these two nodes
- * a Stairs connection? (as opposed to a Fork)
- */
-export function isConnectionStairs<
-  ForkName extends string,
-  StairName extends string
->(
-  node: ForkNode<ForkName> | StairNode<StairName>
-): node is StairNode<StairName> {
-  return typeof node === "object" && node._type === "StairNode";
-}
-
-export function isReverseConnection<
-  ForkName extends string,
-  StairName extends string
->(
-  nodeId2: ForkNode<ForkName> | StairNode<StairName>
-): nodeId2 is ReversedConnection<ForkName> {
-  return typeof nodeId2 !== "string" && !isConnectionStairs(nodeId2);
 }
 
 function getStairConnections<ForkName extends string, StairName extends string>(
@@ -82,7 +36,7 @@ function getStairConnections<ForkName extends string, StairName extends string>(
   const stairNodes = hallConnections
     .flat()
     .map(thing => thing.nodeId)
-    .filter(isConnectionStairs);
+    .filter((st): st is StairNode<StairName> => st instanceof StairNode);
   const staircases = [...new Set(stairNodes.map(node => node.name))];
   return staircases.map(name =>
     stairNodes
@@ -174,7 +128,7 @@ export function getShortestPath<
 ): (ForkNode<ForkName> | StairNode<StairName>)[] {
   return dijkstra
     .find_path(graph, nodeToString(idFrom), nodeToString(idTo))
-    .map(nodeStr => stringToNode(nodeStr));
+    .map(nodeStr => nodeFromString(nodeStr));
 }
 
 /**

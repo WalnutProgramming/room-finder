@@ -22,7 +22,7 @@ export class Fork<ForkName extends string> extends ForkableRoom<ForkName> {
    */
   constructor(
     side: Direction,
-    nodeId: ForkNode<ForkName>,
+    nodeId: ForkNode<ForkName> | ForkName,
     public destinationName: string,
     edgeLengthFromPreviousNodeInHallway: number | undefined = 1
   ) {

@@ -3,6 +3,7 @@ import { Turn } from "./Turn";
 import { Stairs } from "./Stairs";
 import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
+import { Room } from "./Room";
 
 /**
  * This class represents a single hallway. The hallway may have turns,
@@ -19,7 +20,12 @@ export class Hallway<ForkName extends string, StairName extends string> {
    * @param name - The name of this [[Hallway]].
    */
   constructor(
-    public partList: (ForkableRoom<ForkName> | Stairs<StairName> | Turn)[],
+    public partList: (
+      | ForkableRoom<ForkName>
+      | Stairs<StairName>
+      | Turn
+      | Room
+    )[],
     public name?: string | null
   ) {}
 

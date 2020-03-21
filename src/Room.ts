@@ -1,7 +1,9 @@
-import { ForkableRoom } from "./ForkableRoom";
 import { Direction } from "./Direction";
+import { HallwayElement } from "./HallwayElement";
 
-export class Room extends ForkableRoom<any> {
+export class Room extends HallwayElement {
+  private _type = "Room";
+
   constructor(
     name?: (string | null) | undefined,
     side: Direction = Direction.LEFT,
@@ -19,7 +21,7 @@ export class Room extends ForkableRoom<any> {
       edgeLengthFromPreviousNodeInHallway,
       prefix,
       aliases,
-      nodeId: undefined,
     });
   }
 }
+// export { ForkableRoom as Room };

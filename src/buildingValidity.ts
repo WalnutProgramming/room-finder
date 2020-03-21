@@ -1,11 +1,22 @@
 import { Building } from "./Building";
-import {
-  isConnectedGraph,
-  isConnectionStairs,
-  isReverseConnection,
-} from "./graph";
+import { isConnectedGraph } from "./graph";
 import { Turn } from "./Turn";
 import { Direction } from "./Direction";
+import { StairNode } from "./StairNode";
+import { ForkNode, reverseConnection } from "./ForkNode";
+import { nodeFromString } from "./node";
+
+function nodeToHumanString<ForkName extends string, StairName extends string>(
+  node: ForkNode<ForkName> | StairNode<StairName>
+): string {
+  if (node instanceof StairNode) {
+    return `onFloor('${node.name}', ${node.floor})`;
+  } else if (node.reversed) {
+    return `reverseConnection('${node.name}')`;
+  } else {
+    return `'${node.name}'`;
+  }
+}
 
 /**
  * `building.validity.valid` is true if the building passes a few validity
@@ -37,6 +48,8 @@ export function isValidBuilding<
   | { valid: false; reason: string; connectedSections: string[][] } {
   const connectedSections = isConnectedGraph(b.graph).connectedSections;
 
+  // TODO: add test that node IDs don't contain "-$-"
+
   // More than one room can't have the same name
   let ret: {
     valid: false;
@@ -60,7 +73,11 @@ export function isValidBuilding<
       if (edgeLen < 0) {
         return {
           valid: false,
-          reason: `The edge from node '${id1}' to node '${id2}' has a negative weight`,
+          reason: `The edge from node ${nodeToHumanString(
+            nodeFromString(id1)
+          )} to node ${nodeToHumanString(
+            nodeFromString(id2)
+          )} has a negative weight`,
           connectedSections,
         };
       }
@@ -70,9 +87,9 @@ export function isValidBuilding<
   // shouldn't have duplicated or unmatched nodes
   const allNodes = b.hallways.flatMap(h => h.nodes).map(({ nodeId }) => nodeId);
   for (const nodeId of allNodes) {
-    if (isConnectionStairs(nodeId)) {
+    if (nodeId instanceof StairNode) {
       const sameStaircase = allNodes
-        .filter(isConnectionStairs)
+        .filter((id): id is StairNode<StairName> => id instanceof StairNode)
         .filter(nodeId2 => nodeId2.name === nodeId.name);
       const same = sameStaircase.filter(
         nodeId2 => nodeId2.floor === nodeId.floor
@@ -93,47 +110,40 @@ export function isValidBuilding<
           connectedSections,
         };
       }
-    } else if (typeof nodeId === "string") {
-      const same = allNodes.filter(nodeId2 => nodeId2 === nodeId);
+    } else {
+      const same = allNodes.filter(
+        nodeId2 =>
+          nodeId2 instanceof ForkNode &&
+          nodeId2.name === nodeId.name &&
+          nodeId2.reversed === nodeId.reversed
+      );
       if (same.length > 1) {
         return {
           valid: false,
-          reason: `There's more than one Fork with the nodeId '${nodeId}'. One of them should probably be a reverseConnection.`,
+          reason: `There's more than one Fork with the nodeId ${nodeToHumanString(
+            nodeId
+          )}. One of them should probably ${
+            nodeId.reversed ? "not " : ""
+          }be a reverseConnection.`,
           connectedSections,
         };
       }
       const reversed = allNodes
-        .filter(isReverseConnection)
-        .filter(({ name }) => name === nodeId);
+        .filter(
+          other =>
+            other instanceof ForkNode && other.reversed !== nodeId.reversed
+        )
+        .filter(({ name }) => name === nodeId.name);
       if (reversed.length === 0) {
         return {
           valid: false,
-          reason:
-            `There's a Fork with the nodeId '${nodeId}' that doesn't have a reverseConnection. ` +
-            `You need to either add a Fork somewhere else with the nodeId reverseConnection('${nodeId}') to connect it to this node, or remove this node.`,
-          connectedSections,
-        };
-      }
-    } else {
-      const same = allNodes
-        .filter(isReverseConnection)
-        .filter(({ name }) => name === nodeId.name);
-      if (same.length > 1) {
-        return {
-          valid: false,
-          reason: `There's more than one Fork with the nodeId reverseConnection('${nodeId.name}'). One of them should probably not be a reverseConnection.`,
-          connectedSections,
-        };
-      }
-      const forward = allNodes
-        .filter((node): node is ForkName => typeof node === "string")
-        .filter(node => node === nodeId.name);
-      if (forward.length === 0) {
-        return {
-          valid: false,
-          reason:
-            `There's a Fork with the nodeId reverseConnection('${nodeId.name}') that doesn't have a regular connection. ` +
-            `You need to either add a Fork somewhere else with the nodeId '${nodeId.name}' to connect it to this node, or remove this node.`,
+          reason: `There's a Fork with the nodeId ${nodeToHumanString(
+            nodeId
+          )} that doesn't have a corresponding ${
+            nodeId.reversed ? "regular connection" : "reverseConnection"
+          }. You need to either add a Fork somewhere else with the nodeId ${nodeToHumanString(
+            reverseConnection(nodeId)
+          )} to connect it to this node, or remove this node.`,
           connectedSections,
         };
       }

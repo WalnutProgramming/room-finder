@@ -1,6 +1,6 @@
 import { HallwayElement } from "./HallwayElement";
 import { Direction } from "./Direction";
-import { ForkNode } from "./ForkNode";
+import { ForkNode, getConnection } from "./ForkNode";
 
 export class ForkableRoom<ForkName extends string> extends HallwayElement {
   readonly nodeId: ForkNode<ForkName> | undefined;
@@ -17,7 +17,7 @@ export class ForkableRoom<ForkName extends string> extends HallwayElement {
       prefix?: string;
       aliases?: string[];
       edgeLengthFromPreviousNodeInHallway?: number | null;
-      nodeId?: ForkNode<ForkName>;
+      nodeId?: ForkNode<ForkName> | ForkName;
     } = {}
   ) {
     super(name, side, {
@@ -25,6 +25,6 @@ export class ForkableRoom<ForkName extends string> extends HallwayElement {
       prefix,
       aliases,
     });
-    this.nodeId = nodeId;
+    if (nodeId != null) this.nodeId = getConnection<ForkName>(nodeId);
   }
 }
