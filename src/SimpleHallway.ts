@@ -13,7 +13,7 @@ export class SimpleHallway<
     partList: Room<ForkName>[],
     public hallwayName: string
   ) {
-    super([new Fork(Direction.FRONT, nodeId, ""), ...partList]);
+    super([new Fork(Direction.LEFT, nodeId, ""), ...partList]);
   }
 
   getDirectionsFromIndices(from: number, to: number) {

@@ -327,3 +327,6 @@ describe("correct transition phrasing", () => {
     `);
   });
 });
+
+// TODO: add tests with SimpleHallway and rooms that are nodes
+// add tests for aliases
