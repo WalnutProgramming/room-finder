@@ -1,9 +1,8 @@
-import { ForkableRoom } from "./ForkableRoom";
+import { Room } from "./Room";
 import { Turn } from "./Turn";
 import { Stairs } from "./Stairs";
 import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
-import { Room } from "./Room";
 
 /**
  * This class represents a single hallway. The hallway may have turns,
@@ -20,12 +19,7 @@ export class Hallway<ForkName extends string, StairName extends string> {
    * @param name - The name of this [[Hallway]].
    */
   constructor(
-    public partList: (
-      | ForkableRoom<ForkName>
-      | Stairs<StairName>
-      | Turn
-      | Room
-    )[],
+    public partList: (Room<ForkName> | Stairs<StairName> | Turn)[],
     public name?: string | null
   ) {}
 
@@ -64,7 +58,7 @@ export class Hallway<ForkName extends string, StairName extends string> {
     });
 
     const closest = this.partList[closestNodeInd!] as
-      | ForkableRoom<ForkName>
+      | Room<ForkName>
       | Stairs<StairName>;
     return closest.nodeId!;
   }
@@ -75,7 +69,7 @@ export class Hallway<ForkName extends string, StairName extends string> {
   }[] {
     return this.partList
       .filter(
-        (r): r is ForkableRoom<ForkName> | Stairs<StairName> =>
+        (r): r is Room<ForkName> | Stairs<StairName> =>
           "nodeId" in r && r.nodeId != null
       )
       .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
@@ -115,13 +109,9 @@ export class Hallway<ForkName extends string, StairName extends string> {
       entranceWasStraight: boolean;
     }
   ): string {
-    const fromRoom = this.partList[from] as
-      | ForkableRoom<ForkName>
-      | Stairs<StairName>;
+    const fromRoom = this.partList[from] as Room<ForkName> | Stairs<StairName>;
 
-    const toRoom = this.partList[to] as
-      | ForkableRoom<ForkName>
-      | Stairs<StairName>;
+    const toRoom = this.partList[to] as Room<ForkName> | Stairs<StairName>;
 
     if (from === to) {
       return `Bruh. You at ${fromRoom.fullName}\n`;
@@ -145,7 +135,7 @@ export class Hallway<ForkName extends string, StairName extends string> {
         this.partList[i - forwardOrBackward];
       ret += current.onPass(
         forwardOrBackward,
-        prevRoom as ForkableRoom<ForkName> | Stairs<StairName>
+        prevRoom as Room<ForkName> | Stairs<StairName>
       );
     }
 

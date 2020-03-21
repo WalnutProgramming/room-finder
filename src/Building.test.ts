@@ -2,7 +2,6 @@ import {
   Building,
   Hallway,
   Room,
-  ForkableRoom,
   Fork,
   Direction,
   Stairs,

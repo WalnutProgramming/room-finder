@@ -1,5 +1,5 @@
 import { Hallway } from "./Hallway";
-import { ForkableRoom } from "./ForkableRoom";
+import { Room } from "./Room";
 import { getShortestPath, isConnectedGraph, getGraph } from "./graph";
 import { isLeftOrRight } from "./Direction";
 import { ForkNode } from "./ForkNode";
@@ -85,7 +85,7 @@ export class Building<
     this.graph = getGraph(hallwayNodes);
     this.roomsList = hallways
       .flatMap(h => h.partList)
-      .filter((a): a is ForkableRoom<ForkName> => "name" in a && a.name != null)
+      .filter((a): a is Room<ForkName> => "name" in a && a.name != null)
       .flatMap(r => r.aliases.concat(r.name!))
       .sort();
   }
@@ -232,9 +232,8 @@ export class Building<
           }
         );
         entranceWasStraight = !isLeftOrRight(
-          (this.hallways[currentHallwayInd].partList[prevInd] as ForkableRoom<
-            ForkName
-          >).side
+          (this.hallways[currentHallwayInd].partList[prevInd] as Room<ForkName>)
+            .side
         );
         [currentHallwayInd, currentInd] = [hallwayInd, ind];
       }

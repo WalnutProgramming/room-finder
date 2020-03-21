@@ -1,5 +1,5 @@
 import { Direction } from "./Direction";
-import { ForkableRoom } from "./ForkableRoom";
+import { Room } from "./Room";
 import { ForkNode } from "./ForkNode";
 
 /**
@@ -8,7 +8,7 @@ import { ForkNode } from "./ForkNode";
  * adding to the `hallwayConnections` argument of the [[Hallway]]
  * constructor.
  */
-export class Fork<ForkName extends string> extends ForkableRoom<ForkName> {
+export class Fork<ForkName extends string> extends Room<ForkName> {
   /**
    *
    * @param side - The side of the [[Hallway]] that this [[Fork]] is on

@@ -1,5 +1,5 @@
 import { Hallway } from "./Hallway";
-import { ForkableRoom } from "./ForkableRoom";
+import { Room } from "./Room";
 import { Fork } from "./Fork";
 import { Direction } from "./Direction";
 import { ForkNode } from "./ForkNode";
@@ -10,16 +10,15 @@ export class SimpleHallway<
 > extends Hallway<ForkName, StairName> {
   constructor(
     nodeId: ForkNode<ForkName>,
-    partList: ForkableRoom<ForkName>[],
+    partList: Room<ForkName>[],
     public hallwayName: string
   ) {
     super([new Fork(Direction.FRONT, nodeId, ""), ...partList]);
   }
 
   getDirectionsFromIndices(from: number, to: number) {
-    const toRoomName = (this.partList[to] as ForkableRoom<ForkName>).fullName;
-    const fromRoomName = (this.partList[from] as ForkableRoom<ForkName>)
-      .fullName;
+    const toRoomName = (this.partList[to] as Room<ForkName>).fullName;
+    const fromRoomName = (this.partList[from] as Room<ForkName>).fullName;
     if (from === 0) {
       // We're starting from the fork and going into the room
       return `Enter ${toRoomName}, which is in ${this.hallwayName}\n`;

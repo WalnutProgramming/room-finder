@@ -7,7 +7,6 @@ export {
 } from "./Direction";
 export { Fork } from "./Fork";
 export { Hallway } from "./Hallway";
-export { ForkableRoom } from "./ForkableRoom";
 export { Room } from "./Room";
 export { SimpleHallway } from "./SimpleHallway";
 export { Stairs } from "./Stairs";
