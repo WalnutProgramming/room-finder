@@ -105,6 +105,31 @@ describe("basic directions functionality", () => {
       continue, then turn left into room 109."
     `);
   });
+
+  it("does the '(after passing)' message for Stairs", () => {
+    const building = new Building([
+      new Hallway([
+        new Room("102", Direction.RIGHT),
+        new Room("103", Direction.LEFT),
+        new Room("104", Direction.RIGHT),
+        new Room("105", Direction.LEFT),
+        new Stairs(LEFT, onFloor("a", 1)),
+        new Turn(Direction.RIGHT),
+        new Room("106", Direction.RIGHT),
+        new Room("107"),
+        new Room("108", Direction.RIGHT),
+        new Room("109", Direction.LEFT),
+      ]),
+
+      new Hallway([new Stairs(LEFT, onFloor("a", 2)), new Room("201")]),
+    ]);
+
+    expect(building.getDirections("102", "109")).toMatchInlineSnapshot(`
+      "Turn right out of room 102
+      Continue, then turn right (after passing the stairs on your left)
+      Continue, then turn left into room 109"
+    `);
+  });
 });
 
 describe("hallways with forks", () => {
