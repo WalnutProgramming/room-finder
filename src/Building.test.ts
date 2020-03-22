@@ -126,6 +126,31 @@ describe("basic directions functionality", () => {
     expect(building.getDirections("103", "b")).toBeNull();
   });
 
+  test("aliases and prefixes work", () => {
+    const building = new Building([
+      new Hallway([
+        new Room("102", Direction.RIGHT, { aliases: ["a"] }),
+        new Room("103", Direction.LEFT),
+        new Room("104", Direction.RIGHT),
+        new Room("105", Direction.LEFT),
+        new Room("106", Direction.RIGHT, { aliases: ["b", "c"] }),
+        // If you don't specify a side, the default is Direction.LEFT
+        new Room("107"),
+        new Room("108", Direction.RIGHT, { prefix: "prefixed" }),
+        new Room("109", Direction.LEFT),
+      ]),
+    ]);
+
+    expect(building.getDirections("a", "c")).toEqual(
+      building.getDirections("102", "106")
+    );
+
+    expect(building.getDirections("102", "108")).toMatchInlineSnapshot(`
+      "Turn right out of room 102
+      Continue, then turn right into prefixed 108"
+    `);
+  });
+
   it("does the '(after passing)' message for Stairs", () => {
     const building = new Building([
       new Hallway([
@@ -427,4 +452,3 @@ describe("correct transition phrasing", () => {
 });
 
 // TODO: add tests with SimpleHallway and rooms that are nodes
-// add tests for aliases
