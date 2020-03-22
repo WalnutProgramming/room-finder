@@ -106,6 +106,26 @@ describe("basic directions functionality", () => {
     `);
   });
 
+  it("returns null when a room doesn't exist", () => {
+    const building = new Building([
+      new Hallway([
+        new Room("102", Direction.RIGHT),
+        new Room("103", Direction.LEFT),
+        new Room("104", Direction.RIGHT),
+        new Room("105", Direction.LEFT),
+        new Room("106", Direction.RIGHT),
+        // If you don't specify a side, the default is Direction.LEFT
+        new Room("107"),
+        new Room("108", Direction.RIGHT),
+        new Room("109", Direction.LEFT),
+      ]),
+    ]);
+
+    expect(building.getDirections("a", "b")).toBeNull();
+    expect(building.getDirections("a", "103")).toBeNull();
+    expect(building.getDirections("103", "b")).toBeNull();
+  });
+
   it("does the '(after passing)' message for Stairs", () => {
     const building = new Building([
       new Hallway([

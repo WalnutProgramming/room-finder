@@ -6,17 +6,6 @@ import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
 import { nodeToString } from "./node";
 
-function areConnectedStairs<StairName extends string>(
-  id1: ForkNode<string> | StairNode<StairName>,
-  id2: ForkNode<string> | StairNode<StairName>
-): boolean {
-  return (
-    id1 instanceof StairNode &&
-    id2 instanceof StairNode &&
-    id1.name === id2.name
-  );
-}
-
 /**
  * @ignore
  * @param str - A string of instructions separated by newlines
@@ -166,10 +155,15 @@ export class Building<
       capitalize: true,
       periods: false,
     }
-  ): string {
-    // Find the indices of the hallways of the rooms
-    // and the indices of the rooms in the hallways
+  ): string | null {
+    if (!this.isValidRoomName(from) || !this.isValidRoomName(to)) {
+      return null;
+    }
+
+    // Find (1) the index of the hallway the starting room is located in
+    // and (2) the index of the room within that that hallway
     const [fromHallwayInd, fromInd] = this.getHallwayIndexAndIndex(from)!;
+    // Same for the destination room
     const [toHallwayInd, toInd] = this.getHallwayIndexAndIndex(to)!;
 
     // If there's only one hallway, we don't need to worry about nodes
@@ -192,6 +186,8 @@ export class Building<
       toInd
     );
 
+    // This is to keep track of whether we entered the next hallway through a
+    // straight connection, or we turned left/right to get in.
     let entranceWasStraight = false;
 
     // Get the shortest path between the 2 nodes closest to the rooms
@@ -204,14 +200,16 @@ export class Building<
     let [currentHallwayInd, currentInd] = [fromHallwayInd, fromInd];
     // Loop through the shortest path to convert them to directions
     for (let i = 1; i < shortest.length; i++) {
-      const id = shortest[i];
-      const [hallwayInd, ind] = this.getHallwayIndexAndIndexFromNode(id);
-      const [, prevInd] = this.getHallwayIndexAndIndexFromNode(shortest[i - 1]);
+      const nextId = shortest[i];
+      const [nextHallwayInd, nextInd] = this.getHallwayIndexAndIndexFromNode(
+        nextId
+      );
+      const prevId = shortest[i - 1];
+      const [, prevInd] = this.getHallwayIndexAndIndexFromNode(prevId);
       if (
-        areConnectedStairs(
-          shortest[i - 1],
-          shortest[i]
-        ) /* going up or down stairs */
+        prevId instanceof StairNode &&
+        nextId instanceof StairNode &&
+        prevId.name === nextId.name /* going up or down stairs */
       ) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
@@ -222,20 +220,17 @@ export class Building<
             entranceWasStraight,
           }
         );
-        const numStairFlights = Math.abs(
-          (shortest[i - 1] as StairNode<StairName>).floor -
-            (shortest[i] as StairNode<StairName>).floor
-        );
+        const numStairFlights = Math.abs(prevId.floor - nextId.floor);
         directions += this.getStairConnectionInstruction(
-          shortest[i - 1] as StairNode<StairName>,
-          shortest[i] as StairNode<StairName>,
+          prevId,
+          nextId,
           numStairFlights
         );
         [currentHallwayInd, currentInd] = this.getHallwayIndexAndIndexFromNode(
-          shortest[i]
+          nextId
         );
         entranceWasStraight = true;
-      } else if (hallwayInd !== currentHallwayInd /* it's a fork */) {
+      } else if (nextHallwayInd !== currentHallwayInd /* it's a fork */) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
           prevInd,
@@ -249,7 +244,7 @@ export class Building<
           (this.hallways[currentHallwayInd].partList[prevInd] as Room<ForkName>)
             .side
         );
-        [currentHallwayInd, currentInd] = [hallwayInd, ind];
+        [currentHallwayInd, currentInd] = [nextHallwayInd, nextInd];
       }
     }
     directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
