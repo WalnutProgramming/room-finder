@@ -312,6 +312,64 @@ describe("Building.validity", () => {
     );
   });
 
+  it("respects the allowFrontConnectionsInMiddle property in Hallway", () => {
+    expect(
+      isValidBuilding(
+        new Building([
+          new Hallway(
+            [
+              new Room("a", BACK),
+              new Room("b"),
+              new Turn(RIGHT),
+              new Room("c"),
+            ],
+            { allowFrontConnectionsInMiddle: true }
+          ),
+        ])
+      )
+    ).toEqual(expect.objectContaining({ valid: true }));
+
+    expect(
+      isValidBuilding(
+        new Building([
+          new Hallway(
+            [
+              new Room("a"),
+              new Room("b"),
+              new Turn(RIGHT),
+              new Room("c", BACK),
+            ],
+            { allowFrontConnectionsInMiddle: true }
+          ),
+        ])
+      )
+    ).toEqual(
+      expect.objectContaining({
+        valid: true,
+      })
+    );
+
+    expect(
+      isValidBuilding(
+        new Building([
+          new Hallway(
+            [
+              new Room("a", FRONT),
+              new Room("b"),
+              new Turn(RIGHT),
+              new Room("c"),
+            ],
+            { allowFrontConnectionsInMiddle: true }
+          ),
+        ])
+      )
+    ).toEqual(
+      expect.objectContaining({
+        valid: true,
+      })
+    );
+  });
+
   it("marks buildings with negative weights as invalid", () => {
     expect(
       isValidBuilding(

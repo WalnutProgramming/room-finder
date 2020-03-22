@@ -152,26 +152,28 @@ export function isValidBuilding<
 
   // rooms marked BACK are in the back and rooms marked FRONT are in the front
   b.hallways.forEach((hallway, hallwayIndex) => {
-    hallway.partList.forEach((part, partIndex) => {
-      if (!(part instanceof Turn) && ret == null) {
-        if (partIndex !== 0 && part.side === Direction.BACK) {
-          ret = {
-            valid: false,
-            reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side BACK, but it is not the first element of the hallway`,
-            connectedSections,
-          };
-        } else if (
-          partIndex !== hallway.partList.length - 1 &&
-          part.side === Direction.FRONT
-        ) {
-          ret = {
-            valid: false,
-            reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side FRONT, but it is not the last element of the hallway`,
-            connectedSections,
-          };
+    if (!hallway.allowFrontConnectionsInMiddle) {
+      hallway.partList.forEach((part, partIndex) => {
+        if (!(part instanceof Turn) && ret == null) {
+          if (partIndex !== 0 && part.side === Direction.BACK) {
+            ret = {
+              valid: false,
+              reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side BACK, but it is not the first element of the hallway`,
+              connectedSections,
+            };
+          } else if (
+            partIndex !== hallway.partList.length - 1 &&
+            part.side === Direction.FRONT
+          ) {
+            ret = {
+              valid: false,
+              reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side FRONT, but it is not the last element of the hallway`,
+              connectedSections,
+            };
+          }
         }
-      }
-    });
+      });
+    }
   });
   if (ret != null) return ret;
 

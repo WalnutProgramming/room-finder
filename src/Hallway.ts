@@ -10,6 +10,8 @@ import { StairNode } from "./StairNode";
  * and connect them with 2 [[Fork]]s.
  */
 export class Hallway<ForkName extends string, StairName extends string> {
+  readonly allowFrontConnectionsInMiddle: boolean;
+
   /**
    *
    * @param partList - An array of every [[Room]] or [[Turn]] in the hallway.
@@ -20,8 +22,12 @@ export class Hallway<ForkName extends string, StairName extends string> {
    */
   constructor(
     public partList: (Room<ForkName> | Stairs<StairName> | Turn)[],
-    public name?: string | null
-  ) {}
+    {
+      allowFrontConnectionsInMiddle = false,
+    }: { allowFrontConnectionsInMiddle?: boolean } = {}
+  ) {
+    this.allowFrontConnectionsInMiddle = allowFrontConnectionsInMiddle;
+  }
 
   /**
    * @param - name The name of the room

@@ -206,9 +206,7 @@ export class Building<
     for (let i = 1; i < shortest.length; i++) {
       const id = shortest[i];
       const [hallwayInd, ind] = this.getHallwayIndexAndIndexFromNode(id);
-      const [prevHallwayInd, prevInd] = this.getHallwayIndexAndIndexFromNode(
-        shortest[i - 1]
-      );
+      const [, prevInd] = this.getHallwayIndexAndIndexFromNode(shortest[i - 1]);
       if (
         areConnectedStairs(
           shortest[i - 1],
@@ -236,7 +234,7 @@ export class Building<
         [currentHallwayInd, currentInd] = this.getHallwayIndexAndIndexFromNode(
           shortest[i]
         );
-        entranceWasStraight = true; // TODO
+        entranceWasStraight = true;
       } else if (hallwayInd !== currentHallwayInd /* it's a fork */) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
