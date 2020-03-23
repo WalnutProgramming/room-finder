@@ -12,7 +12,7 @@ import {
   onFloor,
 } from ".";
 
-const { LEFT, RIGHT, FRONT, BACK } = Direction;
+const { LEFT, RIGHT, FRONT } = Direction;
 
 describe("Building.validity", () => {
   it("marks valid buildings correctly", () => {
@@ -208,12 +208,12 @@ describe("Building.validity", () => {
     );
   });
 
-  it("checks that rooms marked BACK are in the back and rooms marked FRONT are in the front", () => {
+  it("checks that rooms marked FRONT are at the beginning or end of a hallway", () => {
     expect(
       isValidBuilding(
         new Building([
           new Hallway([
-            new Room("a", BACK),
+            new Room("a", FRONT),
             new Room("b"),
             new Turn(RIGHT),
             new Room("c"),
@@ -227,26 +227,7 @@ describe("Building.validity", () => {
         new Building([
           new Hallway([
             new Room("a"),
-            new Room("b"),
-            new Turn(RIGHT),
-            new Room("c", BACK),
-          ]),
-        ])
-      )
-    ).toEqual(
-      expect.objectContaining({
-        valid: false,
-        reason:
-          "The element at position 3 of the Hallway at position 0 has the side BACK, but it is not the first element of the hallway",
-      })
-    );
-
-    expect(
-      isValidBuilding(
-        new Building([
-          new Hallway([
-            new Room("a"),
-            new Room("b", BACK),
+            new Room("b", FRONT),
             new Turn(RIGHT),
             new Room("c"),
           ]),
@@ -256,7 +237,7 @@ describe("Building.validity", () => {
       expect.objectContaining({
         valid: false,
         reason:
-          "The element at position 1 of the Hallway at position 0 has the side BACK, but it is not the first element of the hallway",
+          "The element at position 1 of the Hallway at position 0 has the side FRONT, but it is not the first or last element of the hallway",
       })
     );
 
@@ -277,25 +258,6 @@ describe("Building.validity", () => {
       isValidBuilding(
         new Building([
           new Hallway([
-            new Room("a", FRONT),
-            new Room("b"),
-            new Turn(RIGHT),
-            new Room("c"),
-          ]),
-        ])
-      )
-    ).toEqual(
-      expect.objectContaining({
-        valid: false,
-        reason:
-          "The element at position 0 of the Hallway at position 0 has the side FRONT, but it is not the last element of the hallway",
-      })
-    );
-
-    expect(
-      isValidBuilding(
-        new Building([
-          new Hallway([
             new Room("a"),
             new Room("b", FRONT),
             new Turn(RIGHT),
@@ -307,7 +269,7 @@ describe("Building.validity", () => {
       expect.objectContaining({
         valid: false,
         reason:
-          "The element at position 1 of the Hallway at position 0 has the side FRONT, but it is not the last element of the hallway",
+          "The element at position 1 of the Hallway at position 0 has the side FRONT, but it is not the first or last element of the hallway",
       })
     );
   });
@@ -318,7 +280,7 @@ describe("Building.validity", () => {
         new Building([
           new Hallway(
             [
-              new Room("a", BACK),
+              new Room("a", FRONT),
               new Room("b"),
               new Turn(RIGHT),
               new Room("c"),
@@ -337,7 +299,7 @@ describe("Building.validity", () => {
               new Room("a"),
               new Room("b"),
               new Turn(RIGHT),
-              new Room("c", BACK),
+              new Room("c", FRONT),
             ],
             { allowFrontConnectionsInMiddle: true }
           ),
@@ -442,7 +404,7 @@ describe("Building.validity", () => {
       isValidBuilding(
         new Building([
           new Hallway([
-            new Room("a", BACK),
+            new Room("a", FRONT),
             new Room("b"),
             new Turn(RIGHT),
             new Room("c"),

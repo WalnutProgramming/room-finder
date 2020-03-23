@@ -150,24 +150,19 @@ export function isValidBuilding<
     }
   }
 
-  // rooms marked BACK are in the back and rooms marked FRONT are in the front
+  // rooms marked FRONT are at the beginning or end of a hallway
   b.hallways.forEach((hallway, hallwayIndex) => {
     if (!hallway.allowFrontConnectionsInMiddle) {
       hallway.partList.forEach((part, partIndex) => {
         if (!(part instanceof Turn) && ret == null) {
-          if (partIndex !== 0 && part.side === Direction.BACK) {
-            ret = {
-              valid: false,
-              reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side BACK, but it is not the first element of the hallway`,
-              connectedSections,
-            };
-          } else if (
+          if (
+            partIndex !== 0 &&
             partIndex !== hallway.partList.length - 1 &&
             part.side === Direction.FRONT
           ) {
             ret = {
               valid: false,
-              reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side FRONT, but it is not the last element of the hallway`,
+              reason: `The element at position ${partIndex} of the Hallway at position ${hallwayIndex} has the side FRONT, but it is not the first or last element of the hallway`,
               connectedSections,
             };
           }

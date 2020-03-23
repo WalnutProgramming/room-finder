@@ -235,7 +235,7 @@ console.log(building.getDirections("107", "103"));
 // Continue, then turn right into room 103
 ```
 
-## FRONT and BACK
+## FRONT
 
 ## Adding a Fork
 

@@ -20,7 +20,7 @@ export class Hallway<ForkName extends string, StairName extends string> {
    * consistent with the direction you choose as forward.
    * @param allowFrontConnectionsInMiddle - If true, this hallway may have
    * [[Rooms]] and [[Stairs]] that are not at the ends of the hallway, but are
-   * marked as FRONT or BACK. This is used by [[isValidBuilding]].
+   * marked as FRONT. This is used by [[isValidBuilding]].
    */
   constructor(
     public partList: (Room<ForkName> | Stairs<StairName> | Turn)[],

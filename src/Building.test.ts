@@ -10,7 +10,7 @@ import {
   onFloor,
 } from ".";
 
-const { RIGHT, LEFT, BACK, FRONT } = Direction;
+const { RIGHT, LEFT, FRONT } = Direction;
 
 describe("basic directions functionality", () => {
   it("follows basic example in docs", () => {
@@ -189,7 +189,7 @@ describe("hallways with forks", () => {
 
       // hallway 2
       new Hallway([
-        new Fork(BACK, reverseConnection("fork1"), "the first hallway"),
+        new Fork(FRONT, reverseConnection("fork1"), "the first hallway"),
         new Room("21"),
         new Room("22"),
       ]),
@@ -225,7 +225,7 @@ describe("hallways with forks", () => {
 
       // hallway 2
       new Hallway([
-        new Fork(BACK, reverseConnection("fork1"), "the first hallway"),
+        new Fork(FRONT, reverseConnection("fork1"), "the first hallway"),
         new Room("21"),
         new Room("22"),
       ]),
@@ -263,7 +263,7 @@ describe("hallways with forks", () => {
     const building = new Building<MyConnections>([
       // hallway 1
       new Hallway([
-        new Fork(BACK, "hallway1_to_hallway3", "the third hallway"),
+        new Fork(FRONT, "hallway1_to_hallway3", "the third hallway"),
         new Room("11", LEFT),
         new Fork(RIGHT, "hallway1_to_hallway2", "the second hallway"),
       ]),
