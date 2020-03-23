@@ -4,6 +4,9 @@ import { ForkNode, reverseConnection } from "./ForkNode";
 import { StairNode, onFloor } from "./StairNode";
 import { nodeToString, nodeFromString } from "./node";
 
+/**
+ * @ignore
+ */
 function getHallwayConnections<
   ForkName extends string,
   StairName extends string
@@ -27,6 +30,7 @@ function getHallwayConnections<
     ]);
 }
 
+/** @ignore */
 function getStairConnections<ForkName extends string, StairName extends string>(
   hallConnections: {
     nodeId: ForkNode<ForkName> | StairNode<StairName>;
@@ -134,7 +138,7 @@ export function getShortestPath<
 /**
  * @ignore
  * @param graph - a graph
- * @return - Is this a connected graph?
+ * @returns - Is this a connected graph?
  */
 export function isConnectedGraph(
   graph: dijkstra.Graph

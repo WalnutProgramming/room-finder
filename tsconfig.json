@@ -64,5 +64,18 @@
 
     /* Advanced Options */
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
+  },
+
+  "typedocOptions": {
+    "out": "docs",
+    "mode": "file",
+    "exclude": "**/*.test.ts",
+    "categoryOrder": ["Important", "*"],
+    "categorizeByGroup": false,
+    "excludeExternals": true,
+    "excludeNotExported": true,
+    "exludePrivate": true,
+    "ignoreCompilerErrors": true,
+    "includeVersion": true
   }
 }

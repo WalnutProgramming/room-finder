@@ -4,7 +4,8 @@ import { HallwayElement } from "./HallwayElement";
 import { Stairs } from "./Stairs";
 
 /**
- * This class represents a turn in a single [[Hallway]].
+ * This class represents a turn in a single [[Hallway]]. When a user passes a
+ * Turn, the directions will output: "turn left/right".
  */
 export class Turn {
   constructor(public direction: -1 | 1) {}

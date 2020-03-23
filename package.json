@@ -48,7 +48,7 @@
     "prep": "yarn build && yarn docs && yarn test",
     "prepublishOnly": "yarn prep",
     "readme": "yarn embedme README.md",
-    "docs": "yarn readme && yarn typedoc --out docs --mode file --exclude **/*.test.ts src && copyfiles -u 1 \"docs-copied-files/**/*\" docs",
+    "docs": "yarn readme && yarn typedoc src && copyfiles -u 1 \"docs-copied-files/**/*\" docs",
     "test": "jest"
   },
   "prettier": {

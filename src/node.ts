@@ -1,6 +1,7 @@
 import { StairNode } from "./StairNode";
 import { ForkNode } from "./ForkNode";
 
+/** @ignore */
 export function nodeToString<ForkName extends string, StairName extends string>(
   node: StairNode<StairName> | ForkNode<ForkName>
 ): string {
@@ -11,6 +12,7 @@ export function nodeToString<ForkName extends string, StairName extends string>(
   }
 }
 
+/** @ignore */
 export function nodeFromString<
   ForkName extends string,
   StairName extends string

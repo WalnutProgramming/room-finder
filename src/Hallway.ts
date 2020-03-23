@@ -14,11 +14,13 @@ export class Hallway<ForkName extends string, StairName extends string> {
 
   /**
    *
-   * @param partList - An array of every [[Room]] or [[Turn]] in the hallway.
+   * @param partList - An array of every [[Room]], [[Stairs]], or [[Turn]] in the hallway.
    * You can choose arbitrarily which end of the hallway to start at, but make
-   * sure to keep the sides and directions of the [[Room]]s and [[Turn]]s
+   * sure to keep the sides and directions of the [[Room]]s, [[Stairs]], and [[Turn]]s
    * consistent with the direction you choose as forward.
-   * @param name - The name of this [[Hallway]].
+   * @param allowFrontConnectionsInMiddle - If true, this hallway may have
+   * [[Rooms]] and [[Stairs]] that are not at the ends of the hallway, but are
+   * marked as FRONT or BACK. This is used by [[isValidBuilding]].
    */
   constructor(
     public partList: (Room<ForkName> | Stairs<StairName> | Turn)[],
@@ -45,8 +47,8 @@ export class Hallway<ForkName extends string, StairName extends string> {
   }
 
   /**
-   * @param roomInd - The index of the room in the hallway
-   * @returns The id of the "closest" node to the room in the hallway
+   * @param roomInd - The index of the room in this hallway
+   * @returns The id of the "closest" node to the given room within this hallway
    */
   idOfClosestNodeToIndex(
     roomInd: number
@@ -69,6 +71,9 @@ export class Hallway<ForkName extends string, StairName extends string> {
     return closest.nodeId!;
   }
 
+  /**
+   * An array of all of the node IDs in this hallway.
+   */
   get nodes(): {
     nodeId: ForkNode<ForkName> | StairNode<StairName>;
     edgeLengthFromPreviousNodeInHallway: number;

@@ -7,18 +7,38 @@ type Turn = typeof import("./Turn").Turn;
  * This can be a room, but it can also be a [[Fork]] or [[Stairs]].
  */
 export abstract class HallwayElement {
+  /**
+   * The prefix that should be given whenever mentioning the name of this room.
+   * The default prefix is "room", which is useful when specifying a room with
+   * a number. But if you have a room with a name such as "Library", you should
+   * change the prefix to "the" so that the directions say "the Library" instead
+   * of "room Library". Use an empty string for no prefix.
+   */
   public prefix: string | undefined = "room";
+  /**
+   * Other names for this room. These aliases will not be used in the generated
+   * directions between rooms, but if you use an alias in [[Building.getDirections]],
+   * it will know which room you want to go to.
+   */
   public aliases: string[] = [];
+  /**
+   * The edge length in the graph from the previous node in this Hallway to this
+   * node. Use this if you want to alter the directions to make it less likely
+   * that the user will be given directions that take them along that edge in
+   * the hallway.
+   *
+   * This property has no effect if this hallway element is not a node (has no
+   * node ID).
+   */
   public edgeLengthFromPreviousNodeInHallway: number | null | undefined = null;
 
   /**
    *
-   * @param name - The name of this [[Room]]
-   * @param side - The side of the [[Hallway]] that this [[Room]] is on.
-   * You should decide which side the [[Room]] is on based on how you've
-   * ordered the [[Room]]s in the [[Hallway]] - that is, which direction you've
+   * @param name - The name of this hallway element
+   * @param side - The side of the [[Hallway]] that this element is on.
+   * You should decide which side the element is on based on how you've
+   * ordered the elementss in the [[Hallway]] - that is, which direction you've
    * arbitrarily decided is "forward."
-   * @param nodeId - See [[nodeId]]
    * @param edgeLengthFromPreviousNodeInHallway - See
    * [[edgeLengthFromPreviousNodeInHallway]]
    * @param prefix - See [[prefix]]

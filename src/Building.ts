@@ -11,7 +11,7 @@ import { nodeToString } from "./node";
  * @param str - A string of instructions separated by newlines
  * @param capitalize - Whether to capitalize the beginning of every line
  * @param periods - Whether to add a period at the end of every instruction
- * @return - A formatted version of str
+ * @returns A formatted version of str
  */
 function format(str: string, { capitalize = true, periods = false }) {
   return str
@@ -28,31 +28,16 @@ function format(str: string, { capitalize = true, periods = false }) {
 }
 
 /**
- * This is the class that we use to define a building. (See `src/walnut.ts` for
- * a large example.)
+ * This is the class that we use to define a building. See README.md for
+ * a tutorial on how to create a Building.
  *
- * Here's an example with a single hallway:
- * ```ts
- * const myBuilding = new Building([
- *   new Hallway([
- *     new Room("A", Direction.LEFT),
- *     new Room("B", Direction.RIGHT),
- *     new Turn(Direction.RIGHT),
- *     new Room("C", Direction.LEFT),
- *     new Room("D", Direction.LEFT),
- *     new Stairs(Direction.LEFT, "AFDS"),
- *   ]),
- * ]);
+ * Note on TypeScript usage: It is recommended that you supply your own types
+ * for the generic type parameters ForkName and StairName. See README.md
+ * for an example.
  *
- * console.log(myBuilding.getDirections("A", "C"));
- * ```
- *
- * This outputs:
- * ```plaintext
- * Turn left out of room A
- * Continue, then turn right (after passing room B on your right)
- * Continue, then turn left into room C
- * ```
+ * @typeParam ForkName - The type of string that a node ID for a [[Room]] or [[Fork]]
+ * may use.
+ * @typeParam StairName - The type of string that a node ID for [[Stairs]] may use.
  */
 export class Building<
   ForkName extends string = string,
@@ -60,23 +45,19 @@ export class Building<
 > {
   /**
    * The graph that is generated from the nodes in the [[hallways]] and the
-   * [[hallwayConnections]] and [[stairConnections]] between them
+   * connections between them
    */
   readonly graph: { [key: string]: { [key: string]: number } };
   /**
    * An array of all of the names and aliases for all of the rooms
+   * @category Important
    */
   readonly roomsList: string[];
 
   /**
    *
    * @param hallways - All of the hallways in this building
-   * @param hallwayConnections - All of the "fork" connections between
-   * nodes in the building. Each connection is an array that contains the 2
-   * connected node IDs.
-   * @param stairConnections - All of the "stair" connections between nodes
-   * in the building. Each connection is an array of node IDs that starts at the
-   * bottom floor and goes to the top floor.
+   * @category Important
    */
   constructor(readonly hallways: Hallway<ForkName, StairName>[]) {
     const hallwayNodes = this.hallways.map(h => {
@@ -92,10 +73,9 @@ export class Building<
 
   /**
    * @param name - The name of the room
-   * @return An array, where the first element
-   * is the index of the hallway where the room is located, and
-   * the second element is the index of the room in the hallway. If
-   * the room doesn't exist, `null` is returned.
+   * @returns An array, where the first element is the index of the hallway where
+   * the room is located, and the second element is the index of the room in the
+   * hallway. If the room doesn't exist, returns null.
    */
   public getHallwayIndexAndIndex(name: string): [number, number] | null {
     const inds = this.hallways.map(h => h.getRoomInd(name));
@@ -104,12 +84,13 @@ export class Building<
   }
 
   /**
+   * @ignore
    * @param nodeId - The id of the node
-   * @return An array, where the first element
-   * is the index of the hallway where the node is located, and
-   * the second element is the index of the node in the hallway
+   * @returns An array, where the first element is the index of the hallway where
+   * the node is located, and the second element is the index of the node in the
+   * hallway
    */
-  protected getHallwayIndexAndIndexFromNode(
+  private getHallwayIndexAndIndexFromNode(
     nodeId: ForkNode<ForkName> | StairNode<StairName>
   ): [number, number] {
     const inds = this.hallways.map(h =>
@@ -124,12 +105,20 @@ export class Building<
     return [hallwayInd, inds[hallwayInd]];
   }
 
-  protected getStairConnectionInstruction(
+  /**
+   *
+   * @ignore
+   * @param id1 The first StairNode
+   * @param id2 The second StairNode in the same staircase
+   * @returns The instructions to go up/down that staircase the correct number
+   * of floors
+   */
+  private getStairConnectionInstruction(
     id1: StairNode<StairName>,
-    id2: StairNode<StairName>,
-    numFlights: number
+    id2: StairNode<StairName>
   ): string {
     const goingUp = id2.floor > id1.floor;
+    const numFlights = Math.abs(id1.floor - id2.floor);
     const maybeS = numFlights > 1 ? "s" : "";
     return `go ${
       goingUp ? "up" : "down"
@@ -139,11 +128,12 @@ export class Building<
   /**
    * This is the method that tells you how to get from one room
    * to another in a building.
-   * @param {string} from - The name of the starting room
-   * @param {string} to - The name of the destination room
+   * @param from - The name of the starting room
+   * @param to - The name of the destination room
    * @param capitalize - Whether to capitalize the beginning of every line
    * @param periods - Whether to add a period at the end of every instruction
-   * @return {string} The directions to get from room `from` to room `to`
+   * @returns The directions to get from room `from` to room `to`
+   * @category Important
    */
   public getDirections(
     from: string,
@@ -220,12 +210,7 @@ export class Building<
             entranceWasStraight,
           }
         );
-        const numStairFlights = Math.abs(prevId.floor - nextId.floor);
-        directions += this.getStairConnectionInstruction(
-          prevId,
-          nextId,
-          numStairFlights
-        );
+        directions += this.getStairConnectionInstruction(prevId, nextId);
         [currentHallwayInd, currentInd] = this.getHallwayIndexAndIndexFromNode(
           nextId
         );
@@ -263,8 +248,9 @@ export class Building<
   /**
    *
    * @param name - A possible name for a room in this building
-   * @returns `true` if there is a room with the name or alias
-   * `name`, and `false` otherwise.
+   * @returns true if there is a room with the name or alias
+   * `name`, and false otherwise.
+   * @cateogry Important
    */
   public isValidRoomName(name: string): boolean {
     return (

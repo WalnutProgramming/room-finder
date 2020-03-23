@@ -4,9 +4,8 @@ import { HallwayElement } from "./HallwayElement";
 import { StairNode } from "./StairNode";
 
 /**
- * [[Stairs]] represents one entrance to a set of stairs in a [[Hallway]]. You
- * can connect the [[Stairs]] of 2 hallways by adding to the `stairConnections`
- * argument of the [[Hallway]] constructor.
+ * [[Stairs]] represent one entrance to a staircase in a [[Hallway]] on a
+ * single floor.
  */
 export class Stairs<StairName extends string> extends HallwayElement {
   readonly nodeId: StairNode<StairName>;

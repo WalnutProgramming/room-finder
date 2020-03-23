@@ -4,6 +4,13 @@ import { Fork } from "./Fork";
 import { Direction } from "./Direction";
 import { ForkNode } from "./ForkNode";
 
+/**
+ * This class represents a "hallway" that is simple enough that it is redundant
+ * to give further directions from it to any room inside of it. This can be
+ * useful when describing a room that's inside of another room.
+ *
+ * Example:
+ */
 export class SimpleHallway<
   ForkName extends string,
   StairName extends string
@@ -13,7 +20,9 @@ export class SimpleHallway<
     partList: Room<ForkName>[],
     public hallwayName: string
   ) {
-    super([new Fork(Direction.LEFT, nodeId, ""), ...partList]);
+    super([new Fork(Direction.LEFT, nodeId, ""), ...partList], {
+      allowFrontConnectionsInMiddle: true,
+    });
   }
 
   getDirectionsFromIndices(from: number, to: number) {
