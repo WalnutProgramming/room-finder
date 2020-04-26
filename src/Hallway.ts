@@ -51,13 +51,15 @@ export class Hallway<ForkName extends string, StairName extends string> {
    * @returns The id of the "closest" node to the given room within this hallway
    */
   idOfClosestNodeToIndex(
-    roomInd: number
+    roomInd: number,
+    allowedConnections: (ForkName | StairName)[]
   ): ForkNode<ForkName> | StairNode<StairName> {
     let closestNodeInd: number;
     this.partList.forEach((r, currentInd) => {
       if (
         "nodeId" in r &&
         r.nodeId != null &&
+        allowedConnections.includes(r.nodeId.name) &&
         (closestNodeInd === undefined ||
           Math.abs(currentInd - roomInd) < Math.abs(closestNodeInd - roomInd))
       ) {

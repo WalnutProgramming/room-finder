@@ -59,9 +59,17 @@ export class Building<
    * @param hallways - All of the hallways in this building
    * @category Important
    */
-  constructor(readonly hallways: Hallway<ForkName, StairName>[]) {
+  constructor(
+    readonly hallways: Hallway<ForkName, StairName>[],
+    readonly allowedConnections: (
+      | ForkName
+      | StairName
+    )[] = hallways.flatMap(h => h.nodes.map(n => n.nodeId.name))
+  ) {
     const hallwayNodes = this.hallways.map(h => {
-      return h.nodes;
+      return h.nodes.filter(({ nodeId }) =>
+        allowedConnections.includes(nodeId.name)
+      );
     });
     this.graph = getGraph(hallwayNodes);
     this.roomsList = hallways
@@ -69,6 +77,17 @@ export class Building<
       .filter((a): a is Room<ForkName> => "name" in a && a.name != null)
       .flatMap(r => r.aliases.concat(r.name!))
       .sort();
+  }
+
+  withAllowedConnectionTypes(
+    allowedConnections: (ForkName | StairName)[] | ((name: string) => boolean)
+  ) {
+    return new Building(
+      this.hallways,
+      typeof allowedConnections === "function"
+        ? this.allowedConnections.filter(allowedConnections)
+        : allowedConnections
+    );
   }
 
   /**
@@ -108,21 +127,22 @@ export class Building<
   /**
    *
    * @ignore
-   * @param id1 The first StairNode
-   * @param id2 The second StairNode in the same staircase
+   * TODO
    * @returns The instructions to go up/down that staircase the correct number
    * of floors
    */
-  private getStairConnectionInstruction(
-    id1: StairNode<StairName>,
-    id2: StairNode<StairName>
+  getStairConnectionInstruction(
+    stairName: StairName,
+    floor1: number,
+    floor2: number
   ): string {
-    const goingUp = id2.floor > id1.floor;
-    const numFlights = Math.abs(id1.floor - id2.floor);
+    if (stairName.includes("elevator")) {
+      return `go to floor ${floor2}\n`;
+    }
+    const upOrDown = floor2 > floor1 ? "up" : "down";
+    const numFlights = Math.abs(floor1 - floor2);
     const maybeS = numFlights > 1 ? "s" : "";
-    return `go ${
-      goingUp ? "up" : "down"
-    } ${numFlights} floor${maybeS} of stairs\n`;
+    return `go ${upOrDown} ${numFlights} floor${maybeS} of stairs\n`;
   }
 
   /**
@@ -171,9 +191,10 @@ export class Building<
     // Find IDs of the nodes (stairs or hallways) closest to these rooms
     const closestNodeFromInd = this.hallways[
       fromHallwayInd
-    ].idOfClosestNodeToIndex(fromInd);
+    ].idOfClosestNodeToIndex(fromInd, this.allowedConnections);
     const closestNodeToInd = this.hallways[toHallwayInd].idOfClosestNodeToIndex(
-      toInd
+      toInd,
+      this.allowedConnections
     );
 
     // This is to keep track of whether we entered the next hallway through a
@@ -210,7 +231,11 @@ export class Building<
             entranceWasStraight,
           }
         );
-        directions += this.getStairConnectionInstruction(prevId, nextId);
+        directions += this.getStairConnectionInstruction(
+          prevId.name,
+          prevId.floor,
+          nextId.floor
+        );
         [currentHallwayInd, currentInd] = this.getHallwayIndexAndIndexFromNode(
           nextId
         );

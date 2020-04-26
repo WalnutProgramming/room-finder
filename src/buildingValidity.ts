@@ -85,7 +85,10 @@ export function isValidBuilding<
   }
 
   // shouldn't have duplicated or unmatched nodes
-  const allNodes = b.hallways.flatMap(h => h.nodes).map(({ nodeId }) => nodeId);
+  const allNodes = b.hallways
+    .flatMap(h => h.nodes)
+    .map(({ nodeId }) => nodeId)
+    .filter(nodeId => b.allowedConnections.includes(nodeId.name));
   for (const nodeId of allNodes) {
     if (nodeId instanceof StairNode) {
       const sameStaircase = allNodes
@@ -175,7 +178,9 @@ export function isValidBuilding<
   // If there's more than 1 hallway, each hallway should have a node to
   // connect it to the rest of the hallways
   const indexOfHallwayWithNoNodes = b.hallways.findIndex(
-    h => h.nodes.length === 0
+    h =>
+      h.nodes.filter(({ nodeId }) => b.allowedConnections.includes(nodeId.name))
+        .length === 0
   );
   if (b.hallways.length > 1 && indexOfHallwayWithNoNodes !== -1) {
     return {
