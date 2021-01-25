@@ -1,27 +1,25 @@
 import { Direction } from "./Direction";
-import { Room } from "./Room";
 import { dirToTurnString } from "./Direction";
+import { HallwayElement } from "./HallwayElement";
+import { StairNode } from "./StairNode";
 
 /**
- * [[Stairs]] represents one entrance to a set of stairs in a [[Hallway]]. You
- * can connect the [[Stairs]] of 2 hallways by adding to the `stairConnections`
- * argument of the [[Hallway]] constructor.
+ * [[Stairs]] represent one entrance to a staircase in a [[Hallway]] on a
+ * single floor.
  */
-export class Stairs extends Room {
+export class Stairs<StairName extends string> extends HallwayElement {
+  readonly nodeId: StairNode<StairName>;
+  readonly fullName: string;
+
   constructor(
-    side?: Direction | undefined,
-    nodeId?: (string | null) | undefined,
-    public stairNumber?: string | undefined,
+    side: Direction,
+    nodeId: StairNode<StairName>,
+    fullName: string = "the stairs",
     edgeLengthFromPreviousNodeInHallway?: number | undefined
   ) {
-    super(null, side, { nodeId, edgeLengthFromPreviousNodeInHallway });
-  }
-
-  get fullName() {
-    if (this.stairNumber) {
-      return "the " + this.stairNumber + " stairs";
-    }
-    return "the stairs";
+    super(null, side, { edgeLengthFromPreviousNodeInHallway });
+    this.fullName = fullName;
+    this.nodeId = nodeId;
   }
 
   onLeave(

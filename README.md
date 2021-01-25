@@ -111,15 +111,39 @@ replacing "room-finder" with "room-finder@x.y.z" in either URL above. -->
 
 The version number in the URL isn't required, but it's recommended so that breaking changes in the package don't break your app.
 
-## Usage
+## Modeling a simple Hallway
 
-### Modeling a simple Hallway
+![A single, straight hallway with 8 rooms that alternate between the left and right sides. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](images/basic.png)
 
-![A single, straight hallway with 8 rooms that alternate between the left and right sides](images/1.png)
+This is a simple example of a small "Building." Let's see the code we would need to model this Building so that we can generate directions between any pair of rooms.
+
+The example building above includes only a single hallway with 8 rooms. In this example, we will arbitrarily decide to list the rooms starting from the left side of the picture. (That's what the arrow in the picture represents.)
+
+To create the model, imagine walking down the hallway in the picture from left to right.
+
+- You would pass 102 on your RIGHT,
+- then pass 103 on your LEFT,
+- then pass 104 on your RIGHT,
+- then pass 105 on your LEFT.
+- then pass 106 on your RIGHT,
+- then pass 107 on your LEFT,
+- then pass 108 on your RIGHT,
+- then pass 109 on your LEFT.
+
+If we reversed it and started from the right, we would need to flip the side that each room is on, but the generated directions would stay the same.
 
 ```js
-// examples/ex1.ts#L3-L1000
+// examples/basic.ts#L1-L1000
 
+import {
+  Building,
+  Hallway,
+  Room,
+  Direction,
+  assertValidBuilding,
+} from "room-finder";
+
+/* 1. MODEL THE BUILDING */
 // A Hallway has an array of Rooms. Each Room has a name and a side.
 const hallway = new Hallway([
   new Room("102", Direction.RIGHT),
@@ -133,39 +157,72 @@ const hallway = new Hallway([
   new Room("109", Direction.LEFT),
 ]);
 
-// A Building has an array of Hallways.
-// In this case, there's only one Hallway in the Building.
+// A Building has an array of Hallways. In this case, there's only one Hallway in the Building.
 const building = new Building([hallway]);
 
+/* 2. CHECK BUILDING VALIDITY */
+// The assertValidBuilding function throws an error
+// if there is a problem with the generated Building.
+assertValidBuilding(building);
+
+/* 3. GENERATE DIRECTIONS BETWEEN ROOMS */
 console.log(building.getDirections("102", "109"));
-// Turn right out of room 102
-// Continue, then turn left into room 109
+// output:
+//   Turn right out of room 102
+//   Continue, then turn left into room 109
 
 console.log(building.getDirections("107", "103"));
-// Turn right out of room 107
-// Continue, then turn right into room 103
+// output:
+//   Turn right out of room 107
+//   Continue, then turn right into room 103
 ```
 
-### Adding a Turn
+## Adding a Turn
 
-![The same hallway as before, but with a Turn inserted between 105 and 106](images/2.png)
+![The same hallway as before, but with a Turn inserted between 105 and 106. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](images/fork.png)
+
+This example is the same as above, but a Turn is inserted between 105 and 106. Again, we decided to start the hallway from the left in the picture. Imagine walking through this hallway:
+
+- You would pass 102 on your RIGHT,
+- then pass 103 on your LEFT,
+- then pass 104 on your RIGHT,
+- then pass 105 on your LEFT,
+- **then turn RIGHT,**
+- then pass 106 on your RIGHT,
+- then pass 107 on your LEFT,
+- then pass 108 on your RIGHT,
+- then pass 109 on your LEFT.
+
+Let's convert that into a room-finder model:
 
 ```js
-// examples/ex2.ts#L3-L1000
+// examples/turn.ts#L1-L1000
 
-const hallway = new Hallway([
-  new Room("102", Direction.RIGHT),
-  new Room("103", Direction.LEFT),
-  new Room("104", Direction.RIGHT),
-  new Room("105", Direction.LEFT),
-  new Turn(Direction.RIGHT),
-  new Room("106", Direction.RIGHT),
-  new Room("107"),
-  new Room("108", Direction.RIGHT),
-  new Room("109", Direction.LEFT),
+import {
+  Building,
+  Hallway,
+  Room,
+  Direction,
+  Turn,
+  assertValidBuilding,
+} from "room-finder";
+
+const building = new Building([
+  new Hallway([
+    new Room("102", Direction.RIGHT),
+    new Room("103", Direction.LEFT),
+    new Room("104", Direction.RIGHT),
+    new Room("105", Direction.LEFT),
+    // All we have to do is add a Turn in the middle of the Hallway.
+    new Turn(Direction.RIGHT),
+    new Room("106", Direction.RIGHT),
+    new Room("107"),
+    new Room("108", Direction.RIGHT),
+    new Room("109", Direction.LEFT),
+  ]),
 ]);
 
-const building = new Building([hallway]);
+assertValidBuilding(building);
 
 console.log(building.getDirections("102", "109"));
 // Turn right out of room 102
@@ -177,3 +234,11 @@ console.log(building.getDirections("107", "103"));
 // Continue, then turn left (after passing room 106 on your left)
 // Continue, then turn right into room 103
 ```
+
+## FRONT
+
+## Adding a Fork
+
+![Two hallways connected by a Fork. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](images/fork.png)
+
+Since a person walking through the top hallway in this example has a choice about whether to turn right into the second hallway or to continue in the same hallway, we need to model this example as **two separate Hallways connected by a Fork**.

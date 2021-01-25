@@ -1,14 +1,17 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
-import { getGraph, getShortestPath, isConnectedGraph } from "./graph";
+import { getShortestPath, isConnectedGraph, getGraph } from "./graph";
 import { isLeftOrRight } from "./Direction";
+import { ForkNode } from "./ForkNode";
+import { StairNode } from "./StairNode";
+import { nodeToString } from "./node";
 
 /**
  * @ignore
  * @param str - A string of instructions separated by newlines
  * @param capitalize - Whether to capitalize the beginning of every line
  * @param periods - Whether to add a period at the end of every instruction
- * @return - A formatted version of str
+ * @returns A formatted version of str
  */
 function format(str: string, { capitalize = true, periods = false }) {
   return str
@@ -25,75 +28,73 @@ function format(str: string, { capitalize = true, periods = false }) {
 }
 
 /**
- * This is the class that we use to define a building. (See `src/walnut.ts` for
- * a large example.)
+ * This is the class that we use to define a building. See README.md for
+ * a tutorial on how to create a Building.
  *
- * Here's an example with a single hallway:
- * ```ts
- * const myBuilding = new Building([
- *   new Hallway([
- *     new Room("A", Direction.LEFT),
- *     new Room("B", Direction.RIGHT),
- *     new Turn(Direction.RIGHT),
- *     new Room("C", Direction.LEFT),
- *     new Room("D", Direction.LEFT),
- *     new Stairs(Direction.LEFT, "AFDS"),
- *   ]),
- * ]);
+ * Note on TypeScript usage: It is recommended that you supply your own types
+ * for the generic type parameters ForkName and StairName. See README.md
+ * for an example.
  *
- * console.log(myBuilding.getDirections("A", "C"));
- * ```
- *
- * This outputs:
- * ```plaintext
- * Turn left out of room A
- * Continue, then turn right (after passing room B on your right)
- * Continue, then turn left into room C
- * ```
+ * @typeParam ForkName - The type of string that a node ID for a [[Room]] or [[Fork]]
+ * may use.
+ * @typeParam StairName - The type of string that a node ID for [[Stairs]] may use.
  */
-export class Building {
+export class Building<
+  ForkName extends string = string,
+  StairName extends string = string
+> {
   /**
    * The graph that is generated from the nodes in the [[hallways]] and the
-   * [[hallwayConnections]] and [[stairConnections]] between them
+   * connections between them
    */
   readonly graph: { [key: string]: { [key: string]: number } };
   /**
    * An array of all of the names and aliases for all of the rooms
+   * @category Important
    */
   readonly roomsList: string[];
 
   /**
    *
    * @param hallways - All of the hallways in this building
-   * @param hallwayConnections - All of the "fork" connections between
-   * nodes in the building. Each connection is an array that contains the 2
-   * connected node IDs.
-   * @param stairConnections - All of the "stair" connections between nodes
-   * in the building. Each connection is an array of node IDs that starts at the
-   * bottom floor and goes to the top floor.
+   * @category Important
    */
   constructor(
-    readonly hallways: Hallway[],
-    readonly hallwayConnections: [string, string][] = [],
-    readonly stairConnections: string[][] = []
+    readonly hallways: Hallway<ForkName, StairName>[],
+    readonly allowedConnections: (
+      | ForkName
+      | StairName
+    )[] = hallways.flatMap(h => h.nodes.map(n => n.nodeId.name))
   ) {
     const hallwayNodes = this.hallways.map(h => {
-      return h.nodes;
+      return h.nodes.filter(({ nodeId }) =>
+        allowedConnections.includes(nodeId.name)
+      );
     });
-    this.graph = getGraph(hallwayNodes, stairConnections, hallwayConnections);
+    this.graph = getGraph(hallwayNodes);
     this.roomsList = hallways
       .flatMap(h => h.partList)
-      .filter((a): a is Room => "name" in a && a.name != null)
+      .filter((a): a is Room<ForkName> => "name" in a && a.name != null)
       .flatMap(r => r.aliases.concat(r.name!))
       .sort();
   }
 
+  withAllowedConnectionTypes(
+    allowedConnections: (ForkName | StairName)[] | ((name: string) => boolean)
+  ) {
+    return new Building(
+      this.hallways,
+      typeof allowedConnections === "function"
+        ? this.allowedConnections.filter(allowedConnections)
+        : allowedConnections
+    );
+  }
+
   /**
    * @param name - The name of the room
-   * @return An array, where the first element
-   * is the index of the hallway where the room is located, and
-   * the second element is the index of the room in the hallway. If
-   * the room doesn't exist, `null` is returned.
+   * @returns An array, where the first element is the index of the hallway where
+   * the room is located, and the second element is the index of the room in the
+   * hallway. If the room doesn't exist, returns null.
    */
   public getHallwayIndexAndIndex(name: string): [number, number] | null {
     const inds = this.hallways.map(h => h.getRoomInd(name));
@@ -102,58 +103,57 @@ export class Building {
   }
 
   /**
+   * @ignore
    * @param nodeId - The id of the node
-   * @return An array, where the first element
-   * is the index of the hallway where the node is located, and
-   * the second element is the index of the node in the hallway
+   * @returns An array, where the first element is the index of the hallway where
+   * the node is located, and the second element is the index of the node in the
+   * hallway
    */
-  protected getHallwayIndexAndIndexFromNode(nodeId: string): [number, number] {
+  private getHallwayIndexAndIndexFromNode(
+    nodeId: ForkNode<ForkName> | StairNode<StairName>
+  ): [number, number] {
     const inds = this.hallways.map(h =>
-      h.partList.findIndex(r => "nodeId" in r && r.nodeId === nodeId)
+      h.partList.findIndex(
+        r =>
+          "nodeId" in r &&
+          r.nodeId != null &&
+          nodeToString(r.nodeId) === nodeToString(nodeId)
+      )
     );
     const hallwayInd = inds.findIndex(a => a !== -1);
     return [hallwayInd, inds[hallwayInd]];
   }
 
   /**
-   * @param id1
-   * @param id2
-   * @return Is the connection between these two nodes
-   * a Stairs connection? (as opposed to a Fork)
+   *
+   * @ignore
+   * TODO
+   * @returns The instructions to go up/down that staircase the correct number
+   * of floors
    */
-  protected isConnectionStairs(id1: string, id2: string): boolean {
-    return (
-      this.stairConnections.findIndex(
-        arr => arr.includes(id1) && arr.includes(id2)
-      ) != -1
-    );
-  }
-
-  protected getStairConnectionInstruction(
-    id1: string,
-    id2: string,
-    numFlights: number
+  getStairConnectionInstruction(
+    stairName: StairName,
+    floor1: number,
+    floor2: number
   ): string {
-    const goingUp = this.stairConnections.find(
-      arr =>
-        arr.includes(id1) &&
-        arr.includes(id2) &&
-        arr.indexOf(id2) > arr.indexOf(id1)
-    );
+    if (stairName.includes("elevator")) {
+      return `go to floor ${floor2}\n`;
+    }
+    const upOrDown = floor2 > floor1 ? "up" : "down";
+    const numFlights = Math.abs(floor1 - floor2);
     const maybeS = numFlights > 1 ? "s" : "";
-    return `go ${
-      goingUp ? "up" : "down"
-    } ${numFlights} floor${maybeS} of stairs\n`;
+    return `go ${upOrDown} ${numFlights} floor${maybeS} of stairs\n`;
   }
 
   /**
    * This is the method that tells you how to get from one room
    * to another in a building.
-   * @param {string} from - The name of the starting room
-   * @param {string} to - The name of the destination room
+   * @param from - The name of the starting room
+   * @param to - The name of the destination room
    * @param capitalize - Whether to capitalize the beginning of every line
    * @param periods - Whether to add a period at the end of every instruction
-   * @return {string} The directions to get from room `from` to room `to`
+   * @returns The directions to get from room `from` to room `to`
+   * @category Important
    */
   public getDirections(
     from: string,
@@ -165,10 +165,15 @@ export class Building {
       capitalize: true,
       periods: false,
     }
-  ): string {
-    // Find the indices of the hallways of the rooms
-    // and the indices of the rooms in the hallways
+  ): string | null {
+    if (!this.isValidRoomName(from) || !this.isValidRoomName(to)) {
+      return null;
+    }
+
+    // Find (1) the index of the hallway the starting room is located in
+    // and (2) the index of the room within that that hallway
     const [fromHallwayInd, fromInd] = this.getHallwayIndexAndIndex(from)!;
+    // Same for the destination room
     const [toHallwayInd, toInd] = this.getHallwayIndexAndIndex(to)!;
 
     // If there's only one hallway, we don't need to worry about nodes
@@ -186,11 +191,14 @@ export class Building {
     // Find IDs of the nodes (stairs or hallways) closest to these rooms
     const closestNodeFromInd = this.hallways[
       fromHallwayInd
-    ].idOfClosestNodeToIndex(fromInd);
+    ].idOfClosestNodeToIndex(fromInd, this.allowedConnections);
     const closestNodeToInd = this.hallways[toHallwayInd].idOfClosestNodeToIndex(
-      toInd
+      toInd,
+      this.allowedConnections
     );
 
+    // This is to keep track of whether we entered the next hallway through a
+    // straight connection, or we turned left/right to get in.
     let entranceWasStraight = false;
 
     // Get the shortest path between the 2 nodes closest to the rooms
@@ -203,16 +211,16 @@ export class Building {
     let [currentHallwayInd, currentInd] = [fromHallwayInd, fromInd];
     // Loop through the shortest path to convert them to directions
     for (let i = 1; i < shortest.length; i++) {
-      const id = shortest[i];
-      const [hallwayInd, ind] = this.getHallwayIndexAndIndexFromNode(id);
-      const [prevHallwayInd, prevInd] = this.getHallwayIndexAndIndexFromNode(
-        shortest[i - 1]
+      const nextId = shortest[i];
+      const [nextHallwayInd, nextInd] = this.getHallwayIndexAndIndexFromNode(
+        nextId
       );
+      const prevId = shortest[i - 1];
+      const [, prevInd] = this.getHallwayIndexAndIndexFromNode(prevId);
       if (
-        this.isConnectionStairs(
-          shortest[i - 1],
-          shortest[i]
-        ) /* going up or down stairs */
+        prevId instanceof StairNode &&
+        nextId instanceof StairNode &&
+        prevId.name === nextId.name /* going up or down stairs */
       ) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
@@ -223,19 +231,16 @@ export class Building {
             entranceWasStraight,
           }
         );
-        const numStairFlights = Math.ceil(
-          this.graph[shortest[i - 1]][shortest[i]]
-        );
         directions += this.getStairConnectionInstruction(
-          shortest[i - 1],
-          shortest[i],
-          numStairFlights
+          prevId.name,
+          prevId.floor,
+          nextId.floor
         );
         [currentHallwayInd, currentInd] = this.getHallwayIndexAndIndexFromNode(
-          shortest[i]
+          nextId
         );
-        entranceWasStraight = true; // TODO
-      } else if (hallwayInd !== currentHallwayInd /* it's a fork */) {
+        entranceWasStraight = true;
+      } else if (nextHallwayInd !== currentHallwayInd /* it's a fork */) {
         directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
           currentInd,
           prevInd,
@@ -246,9 +251,10 @@ export class Building {
           }
         );
         entranceWasStraight = !isLeftOrRight(
-          (<Room>this.hallways[currentHallwayInd].partList[prevInd]).side
+          (this.hallways[currentHallwayInd].partList[prevInd] as Room<ForkName>)
+            .side
         );
-        [currentHallwayInd, currentInd] = [hallwayInd, ind];
+        [currentHallwayInd, currentInd] = [nextHallwayInd, nextInd];
       }
     }
     directions += this.hallways[currentHallwayInd].getDirectionsFromIndices(
@@ -267,89 +273,13 @@ export class Building {
   /**
    *
    * @param name - A possible name for a room in this building
-   * @returns `true` if there is a room with the name or alias
-   * `name`, and `false` otherwise.
+   * @returns true if there is a room with the name or alias
+   * `name`, and false otherwise.
+   * @cateogry Important
    */
   public isValidRoomName(name: string): boolean {
     return (
       typeof name === "string" && this.getHallwayIndexAndIndex(name) != null
     );
-  }
-
-  /**
-   * `building.validity.valid` is true if the building passes a few validity
-   * tests. This is useful for testing.
-   *
-   * There are several reasons that it could be false:
-   * 1. There's more than one room with the same name.
-   * 2. There's at least one hallway that doesn't have any nodes (Forks or
-   * Stairs) to connect it to the rest of the building.
-   * 3. The graph isn't connected (`connectedSections > 1`). That means there's
-   * a group of at least one node that isn't connected to the rest of the graph.
-   * 4. There are negative edge weights in the graph.
-   *
-   * If `building.validity.valid` is false, `building.validity.reason` gives
-   * the reason why it's invalid.
-   *
-   * `connectedSections` is a string[][], where each string[] is a list of nodes
-   * that are all connected. (Each string[] forms a connected graph.) This is
-   * useful for debugging to figure out which nodes aren't connected to the rest
-   * of the graph.
-   */
-  get validity():
-    | { valid: true; connectedSections: string[][] }
-    | { valid: false; reason: string; connectedSections: string[][] } {
-    const connectedSections = isConnectedGraph(this.graph).connectedSections;
-
-    // More than one room can't have the same name
-    let ret = null;
-    this.roomsList.forEach((name, index) => {
-      if (this.roomsList.indexOf(name) !== index) {
-        ret = {
-          valid: false,
-          reason: `There's more than one room with the name '${name}'`,
-          connectedSections,
-        };
-      }
-    });
-    if (ret != null) return ret;
-
-    // Edges can't have negative weights
-    for (const [id1, obj] of Object.entries(this.graph)) {
-      for (const [id2, edgeLen] of Object.entries(obj)) {
-        if (edgeLen < 0) {
-          return {
-            valid: false,
-            reason: `The edge from node '${id1}' to node '${id2}' has a negative weight`,
-            connectedSections,
-          };
-        }
-      }
-    }
-
-    // If there's more than 1 hallway, each hallway should have a node to
-    // connect it to the rest of the hallways
-    const indexOfHallwayWithNoNodes = this.hallways.findIndex(
-      h => h.nodes.length === 0
-    );
-    if (this.hallways.length > 1 && indexOfHallwayWithNoNodes !== -1) {
-      return {
-        valid: false,
-        reason: `The hallway at index ${indexOfHallwayWithNoNodes} has no nodes (Forks or Stairs)`,
-        connectedSections,
-      };
-    }
-
-    // Graph should be connected
-    if (!isConnectedGraph(this.graph).connected) {
-      return {
-        valid: false,
-        reason:
-          "Not all nodes are connected; see building.validity.connectedSections to find which node groups are separated",
-        connectedSections: isConnectedGraph(this.graph).connectedSections,
-      };
-    }
-
-    return { valid: true, connectedSections };
   }
 }

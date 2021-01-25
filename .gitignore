@@ -19,3 +19,6 @@ dist/
 yarn-error.log
 
 docs
+
+# jest test coverage
+coverage/

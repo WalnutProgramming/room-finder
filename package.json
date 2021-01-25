@@ -1,6 +1,6 @@
 {
   "name": "room-finder",
-  "version": "0.0.11",
+  "version": "0.0.12-alpha.8",
   "repository": "github:WalnutProgramming/room-finder",
   "homepage": "https://room-finder.walnut.direct/",
   "license": "AGPL-3.0-only",
@@ -30,7 +30,7 @@
     "rollup": "^1.32.0",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-terser": "^5.1.3",
-    "typedoc": "^0.16.11",
+    "typedoc": "^0.17.4",
     "typescript": "~3.8.2"
   },
   "dependencies": {
@@ -48,7 +48,7 @@
     "prep": "yarn build && yarn docs && yarn test",
     "prepublishOnly": "yarn prep",
     "readme": "yarn embedme README.md",
-    "docs": "yarn readme && yarn typedoc --out docs --mode file --exclude **/*.test.ts src && copyfiles -u 1 \"docs-copied-files/**/*\" docs",
+    "docs": "yarn readme && yarn typedoc src && copyfiles -u 1 \"docs-copied-files/**/*\" docs",
     "test": "jest"
   },
   "prettier": {

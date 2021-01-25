@@ -1,126 +1,17 @@
-import { Building, Hallway, Room, Fork, Direction, Stairs, Turn } from ".";
+import {
+  Building,
+  Hallway,
+  Room,
+  Fork,
+  Direction,
+  Stairs,
+  Turn,
+  reverseConnection,
+  onFloor,
+} from ".";
+import { isValidBuilding } from "./buildingValidity";
 
-const { RIGHT, LEFT } = Direction;
-
-describe("Building.validity", () => {
-  test("valid buildings", () => {
-    expect(
-      new Building([new Hallway([new Room("a"), new Room("b")])]).validity.valid
-    ).toBe(true);
-
-    expect(
-      new Building([
-        new Hallway([
-          new Room("a"),
-          new Room("b"),
-          new Turn(RIGHT),
-          new Fork(LEFT, "a", ""),
-        ]),
-      ]).validity.valid
-    ).toBe(true);
-
-    expect(
-      new Building(
-        [
-          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-          new Hallway([new Room("z"), new Fork(RIGHT, "b", "")]),
-        ],
-        [["a", "b"]]
-      ).validity.valid
-    ).toBe(true);
-
-    expect(
-      new Building(
-        [
-          new Hallway([new Room("a"), new Room("b"), new Stairs(LEFT, "a")]),
-          new Hallway([new Room("z"), new Stairs(RIGHT, "b")]),
-        ],
-        [],
-        [["b", "a"]]
-      ).validity.valid
-    ).toBe(true);
-  });
-
-  test("buildings with duplicated names are invalid", () => {
-    expect(
-      new Building([new Hallway([new Room("a"), new Room("a")])]).validity
-    ).toEqual({
-      valid: false,
-      reason: "There's more than one room with the name 'a'",
-      connectedSections: [],
-    });
-
-    expect(
-      new Building(
-        [
-          new Hallway([new Room("a"), new Room("b"), new Stairs(LEFT, "c")]),
-          new Hallway([new Room("a"), new Stairs(RIGHT, "b")]),
-        ],
-        [],
-        [["c", "b"]]
-      ).validity
-    ).toEqual({
-      valid: false,
-      reason: "There's more than one room with the name 'a'",
-      connectedSections: [["c", "b"]],
-    });
-  });
-
-  test("buildings with negative weights are invalid", () => {
-    expect(
-      new Building(
-        [
-          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-          new Hallway([
-            new Fork(RIGHT, "f", ""),
-            new Room("z"),
-            new Fork(RIGHT, "b", "", -2),
-          ]),
-        ],
-        [["a", "b"]]
-      ).validity
-    ).toEqual({
-      valid: false,
-      reason: `The edge from node 'f' to node 'b' has a negative weight`,
-      connectedSections: [["a", "b", "f"]],
-    });
-  });
-
-  test("buildings with no nodes in a Hallway are invalid", () => {
-    expect(
-      new Building(
-        [
-          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-          new Hallway([new Room("z"), new Fork(RIGHT, "b", "")]),
-          new Hallway([new Room("c"), new Room("d")]),
-        ],
-        [["a", "b"]]
-      ).validity
-    ).toEqual({
-      valid: false,
-      reason: "The hallway at index 2 has no nodes (Forks or Stairs)",
-      connectedSections: [["a", "b"]],
-    });
-  });
-
-  test("buildings with disconnected graphs are invalid", () => {
-    expect(
-      new Building(
-        [
-          new Hallway([new Room("a"), new Room("b"), new Fork(LEFT, "a", "")]),
-          new Hallway([new Room("z"), new Fork(RIGHT, "b", "")]),
-          new Hallway([new Room("c"), new Fork(RIGHT, "8", "")]),
-        ],
-        [["a", "b"]]
-      ).validity
-    ).toEqual({
-      valid: false,
-      reason:
-        "Not all nodes are connected; see building.validity.connectedSections to find which node groups are separated",
-      connectedSections: [["8"], ["a", "b"]],
-    });
-  });
-});
+const { RIGHT, LEFT, FRONT } = Direction;
 
 describe("basic directions functionality", () => {
   it("follows basic example in docs", () => {
@@ -215,34 +106,343 @@ describe("basic directions functionality", () => {
       continue, then turn left into room 109."
     `);
   });
+
+  it("returns null when a room doesn't exist", () => {
+    const building = new Building([
+      new Hallway([
+        new Room("102", Direction.RIGHT),
+        new Room("103", Direction.LEFT),
+        new Room("104", Direction.RIGHT),
+        new Room("105", Direction.LEFT),
+        new Room("106", Direction.RIGHT),
+        // If you don't specify a side, the default is Direction.LEFT
+        new Room("107"),
+        new Room("108", Direction.RIGHT),
+        new Room("109", Direction.LEFT),
+      ]),
+    ]);
+
+    expect(building.getDirections("a", "b")).toBeNull();
+    expect(building.getDirections("a", "103")).toBeNull();
+    expect(building.getDirections("103", "b")).toBeNull();
+  });
+
+  test("aliases and prefixes work", () => {
+    const building = new Building([
+      new Hallway([
+        new Room("102", Direction.RIGHT, { aliases: ["a"] }),
+        new Room("103", Direction.LEFT),
+        new Room("104", Direction.RIGHT),
+        new Room("105", Direction.LEFT),
+        new Room("106", Direction.RIGHT, { aliases: ["b", "c"] }),
+        // If you don't specify a side, the default is Direction.LEFT
+        new Room("107"),
+        new Room("108", Direction.RIGHT, { prefix: "prefixed" }),
+        new Room("109", Direction.LEFT),
+      ]),
+    ]);
+
+    expect(building.getDirections("a", "c")).toEqual(
+      building.getDirections("102", "106")
+    );
+
+    expect(building.getDirections("102", "108")).toMatchInlineSnapshot(`
+      "Turn right out of room 102
+      Continue, then turn right into prefixed 108"
+    `);
+  });
+
+  it("does the '(after passing)' message for Stairs", () => {
+    const building = new Building([
+      new Hallway([
+        new Room("102", Direction.RIGHT),
+        new Room("103", Direction.LEFT),
+        new Room("104", Direction.RIGHT),
+        new Room("105", Direction.LEFT),
+        new Stairs(LEFT, onFloor("a", 1)),
+        new Turn(Direction.RIGHT),
+        new Room("106", Direction.RIGHT),
+        new Room("107"),
+        new Room("108", Direction.RIGHT),
+        new Room("109", Direction.LEFT),
+      ]),
+
+      new Hallway([new Stairs(LEFT, onFloor("a", 2)), new Room("201")]),
+    ]);
+
+    expect(building.getDirections("102", "109")).toMatchInlineSnapshot(`
+      "Turn right out of room 102
+      Continue, then turn right (after passing the stairs on your left)
+      Continue, then turn left into room 109"
+    `);
+  });
 });
 
-describe("transition phrasing", () => {
-  test("transitions between parallel hallways are phrased correctly", () => {
-    const building = new Building(
-      [
-        // hallway #1
-        new Hallway([
-          new Room("A", RIGHT),
-          new Room("B"),
-          new Fork(LEFT, "node1", "hallway #2"),
-        ]),
-        // hallway #2
-        new Hallway([
-          new Room("C", RIGHT),
-          new Fork(RIGHT, "node2", "hallway #1"),
-          new Room("D"),
-          new Room("E"),
-          new Fork(LEFT, "node3", "hallway #3"),
-        ]),
-        // hallway #3
-        new Hallway([new Room("F"), new Fork(RIGHT, "node4", "hallway #2")]),
-      ],
-      [
-        ["node1", "node2"],
-        ["node3", "node4"],
-      ]
-    );
+describe("hallways with forks", () => {
+  it("works with one fork", () => {
+    const building = new Building([
+      // hallway 1
+      new Hallway([
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Fork(LEFT, "fork1", "the second hallway"),
+      ]),
+
+      // hallway 2
+      new Hallway([
+        new Fork(FRONT, reverseConnection("fork1"), "the first hallway"),
+        new Room("21"),
+        new Room("22"),
+      ]),
+    ]);
+
+    expect(building.getDirections("21", "11")).toMatchInlineSnapshot(`
+      "Turn right out of room 21
+      Continue, then after entering the first hallway, turn right
+      Continue, then turn left into room 11"
+    `);
+  });
+
+  test("adding a Fork or Stairs doesn't affect the directions within a single hallway", () => {
+    const b1 = new Building([
+      // hallway 1
+      new Hallway([
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Room("13"),
+        new Room("14"),
+      ]),
+    ]);
+
+    const b2 = new Building([
+      // hallway 1
+      new Hallway([
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Room("13"),
+        new Room("14"),
+        new Fork(LEFT, "fork1", "the second hallway"),
+      ]),
+
+      // hallway 2
+      new Hallway([
+        new Fork(FRONT, reverseConnection("fork1"), "the first hallway"),
+        new Room("21"),
+        new Room("22"),
+      ]),
+    ]);
+
+    const b3 = new Building([
+      // hallway 1
+      new Hallway([
+        new Stairs(RIGHT, onFloor("a", 1)),
+        new Room("11", RIGHT),
+        new Room("12"),
+        new Room("13"),
+        new Room("14"),
+        new Stairs(LEFT, onFloor("b", 1)),
+      ]),
+
+      // hallway 2
+      new Hallway([
+        new Stairs(RIGHT, onFloor("a", 2)),
+        new Room("21"),
+        new Room("22"),
+        new Stairs(LEFT, onFloor("b", 2)),
+      ]),
+    ]);
+
+    expect(b1.getDirections("11", "13")).toEqual(b2.getDirections("11", "13"));
+    expect(b1.getDirections("11", "13")).toEqual(b3.getDirections("11", "13"));
+    expect(b1.getDirections("14", "11")).toEqual(b2.getDirections("14", "11"));
+    expect(b1.getDirections("14", "11")).toEqual(b3.getDirections("14", "11"));
+  });
+
+  it("works with 2 forks", () => {
+    type MyConnections = "hallway1_to_hallway2" | "hallway1_to_hallway3";
+
+    const building = new Building<MyConnections>([
+      // hallway 1
+      new Hallway([
+        new Fork(FRONT, "hallway1_to_hallway3", "the third hallway"),
+        new Room("11", LEFT),
+        new Fork(RIGHT, "hallway1_to_hallway2", "the second hallway"),
+      ]),
+
+      // hallway 2
+      new Hallway([
+        new Room("21"),
+        new Fork(
+          FRONT,
+          reverseConnection("hallway1_to_hallway2"),
+          "the first hallway"
+        ),
+      ]),
+
+      // hallway 3
+      new Hallway([
+        new Fork(
+          LEFT,
+          reverseConnection("hallway1_to_hallway3"),
+          "the first hallway"
+        ),
+        new Room("31"),
+      ]),
+    ]);
+
+    expect(building.getDirections("21", "31")).toMatchInlineSnapshot(`
+      "Turn left out of room 21
+      Continue, then after entering the first hallway, turn left
+      Continue, then after entering the third hallway, turn left
+      Continue, then turn left into room 31"
+    `);
+  });
+});
+
+describe("hallways with stairs", () => {
+  it("works with 1 set of stairs with 2 floors", () => {
+    const building = new Building<string, "stair-a">([
+      // hallway 11 (on 1st floor)
+      new Hallway([
+        new Stairs(LEFT, onFloor("stair-a", 1)),
+        new Room("111"),
+        new Room("112"),
+      ]),
+
+      // hallway 21 (on 2nd floor)
+      new Hallway([
+        new Stairs(LEFT, onFloor("stair-a", 2)),
+        new Room("211"),
+        new Room("212"),
+      ]),
+    ]);
+
+    expect(building.getDirections("112", "211")).toMatchInlineSnapshot(`
+      "Turn right out of room 112
+      Continue, then turn right into the stairs
+      Go up 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then turn left into room 211"
+    `);
+  });
+
+  it("works with 1 set of stairs with 3 floors", () => {
+    const building = new Building([
+      // hallway 11 (on 1st floor)
+      new Hallway([
+        new Stairs(LEFT, onFloor("stair-a", 1)),
+        new Room("111"),
+        new Room("112"),
+      ]),
+
+      // hallway 21 (on 2nd floor)
+      new Hallway([
+        new Stairs(LEFT, onFloor("stair-a", 2)),
+        new Room("211"),
+        new Room("212"),
+      ]),
+
+      // hallway 31 (on 3rd floor)
+      new Hallway([
+        new Room("311", RIGHT),
+        new Stairs(LEFT, onFloor("stair-a", 3)),
+        new Room("312"),
+      ]),
+    ]);
+
+    expect(building.getDirections("112", "211")).toMatchInlineSnapshot(`
+      "Turn right out of room 112
+      Continue, then turn right into the stairs
+      Go up 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then turn left into room 211"
+    `);
+
+    // bad!!!
+    expect(building.getDirections("112", "311")).toMatchInlineSnapshot(`
+      "Turn right out of room 112
+      Continue, then turn right into the stairs
+      Go up 2 floors of stairs
+      Turn right out of the stairs
+      Continue, then turn left into room 311"
+    `);
+
+    expect(building.getDirections("312", "212")).toMatchInlineSnapshot(`
+      "Turn right out of room 312
+      Continue, then turn right into the stairs
+      Go down 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then turn left into room 212"
+    `);
+  });
+});
+
+it("works with multiple forks and stairs", () => {
+  type MyForks = "fork1";
+  type MyStairs = "stair-a" | "stair-b";
+
+  const building = new Building<MyForks, MyStairs>([
+    // hallway 11 (on 1st floor)
+    new Hallway([
+      new Stairs(LEFT, onFloor("stair-a", 1)),
+      new Room("111"),
+      new Room("112"),
+    ]),
+
+    // hallway 21 (on 2nd floor)
+    new Hallway([
+      new Stairs(LEFT, onFloor("stair-a", 2)),
+      new Room("211"),
+      new Room("212"),
+      new Fork(RIGHT, reverseConnection("fork1"), "the 22s"),
+    ]),
+
+    // hallway 22 (on 2nd floor)
+    new Hallway([
+      new Room("221"),
+      new Room("222"),
+      new Stairs(LEFT, onFloor("stair-b", 2)),
+      new Fork(FRONT, "fork1", "the 21s"),
+    ]),
+
+    // hallway 31 (on 3rd floor)
+    new Hallway([
+      new Room("311", RIGHT),
+      new Stairs(LEFT, onFloor("stair-a", 2)),
+      new Room("312"),
+    ]),
+
+    // hallway 32 (on 3rd floor)
+    new Hallway([
+      new Room("321"),
+      new Stairs(LEFT, onFloor("stair-b", 3)),
+      new Room("322"),
+    ]),
+  ]);
+
+  //TODO: finish
+});
+
+describe("correct transition phrasing", () => {
+  test("for parallel hallways", () => {
+    const building = new Building([
+      // hallway #1
+      new Hallway([
+        new Room("A", RIGHT),
+        new Room("B"),
+        new Fork(LEFT, "node1", "hallway #2"),
+      ]),
+      // hallway #2
+      new Hallway([
+        new Room("C", RIGHT),
+        new Fork(RIGHT, reverseConnection("node1"), "hallway #1"),
+        new Room("D"),
+        new Room("E"),
+        new Fork(LEFT, reverseConnection("node4"), "hallway #3"),
+      ]),
+      // hallway #3
+      new Hallway([new Room("F"), new Fork(RIGHT, "node4", "hallway #2")]),
+    ]);
     expect(building.getDirections("A", "F")).toMatchInlineSnapshot(`
       "Turn right out of room A
       Continue, then turn left into hallway #2, and then turn right
@@ -251,3 +451,92 @@ describe("transition phrasing", () => {
     `);
   });
 });
+
+describe("accessibility", () => {
+  test("example with elevators", () => {
+    type MyForks = "fork1";
+    type MyStairs = "stair-a" | "stair-b" | "elevator-a";
+
+    const building = new Building<MyForks, MyStairs>([
+      // hallway 11 (on 1st floor)
+      new Hallway([
+        new Stairs(LEFT, onFloor("stair-a", 1)),
+        new Room("111"),
+        new Room("112"),
+        new Stairs(LEFT, onFloor("elevator-a", 1), "the elevator"),
+      ]),
+
+      // hallway 21 (on 2nd floor)
+      new Hallway([
+        new Stairs(LEFT, onFloor("stair-a", 2)),
+        new Room("211"),
+        new Room("212"),
+        new Fork(RIGHT, reverseConnection("fork1"), "the 22s"),
+        new Stairs(LEFT, onFloor("elevator-a", 2), "the elevator"),
+      ]),
+
+      // hallway 22 (on 2nd floor)
+      new Hallway([
+        new Room("221"),
+        new Room("222"),
+        new Stairs(LEFT, onFloor("stair-b", 2)),
+        new Fork(FRONT, "fork1", "the 21s"),
+      ]),
+
+      // hallway 31 (on 3rd floor)
+      new Hallway([
+        new Room("311", RIGHT),
+        new Stairs(LEFT, onFloor("stair-a", 3)),
+        new Room("312"),
+        new Stairs(LEFT, onFloor("elevator-a", 3), "the elevator"),
+      ]),
+
+      // hallway 32 (on 3rd floor)
+      new Hallway([
+        new Room("321"),
+        new Stairs(LEFT, onFloor("stair-b", 3)),
+        new Room("322"),
+      ]),
+    ]);
+
+    const buildingNonAccessible = building.withAllowedConnectionTypes(
+      s => !s.includes("elevator")
+    );
+
+    const buildingAccessible = building.withAllowedConnectionTypes(
+      s => !s.includes("stair")
+    );
+
+    expect(buildingNonAccessible.getDirections("111", "312"))
+      .toMatchInlineSnapshot(`
+        "Turn right out of room 111
+        Continue, then turn right into the stairs
+        Go up 2 floors of stairs
+        Turn left out of the stairs
+        Continue, then turn left into room 312"
+      `);
+
+    expect(buildingAccessible.getDirections("111", "312"))
+      .toMatchInlineSnapshot(`
+        "Turn left out of room 111
+        Continue, then turn left into the elevator
+        Go to floor 3
+        Turn right out of the elevator
+        Continue, then turn right into room 312"
+      `);
+
+    expect(isValidBuilding(buildingNonAccessible)).toEqual(
+      expect.objectContaining({ valid: true })
+    );
+
+    expect(isValidBuilding(buildingAccessible)).toEqual(
+      expect.objectContaining({
+        valid: false,
+        reason:
+          "The hallway at index 4 has no nodes (Forks or Stairs) to connect it to the rest of the building.",
+      })
+    );
+  });
+});
+
+// TODO: add tests with SimpleHallway and rooms that are nodes
