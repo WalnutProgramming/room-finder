@@ -75,7 +75,7 @@ export function getGraph<ForkName extends string, StairName extends string>(
 
   const graph: dijkstra.Graph = {};
   hallConnectors.forEach(hall => {
-    return hall.forEach((node, ind) => {
+    hall.forEach((node, ind) => {
       const id = node.nodeId;
       const edgesTo: { [key: string]: number } = {};
       if (ind != 0) {
