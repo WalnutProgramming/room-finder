@@ -4,13 +4,16 @@ import { Turn } from "./Turn";
 import { Direction } from "./Direction";
 import { StairNode } from "./StairNode";
 import { ForkNode, reverseConnection } from "./ForkNode";
-import { nodeFromString } from "./node";
+import { nodeFromString, Node, isConnectorNode } from "./node";
+import { BasicRoomNode } from "./BasicRoomNode";
 
 function nodeToHumanString<ForkName extends string, StairName extends string>(
-  node: ForkNode<ForkName> | StairNode<StairName>
+  node: Node<ForkName, StairName>
 ): string {
   if (node instanceof StairNode) {
     return `onFloor('${node.name}', ${node.floor})`;
+  } else if (node instanceof BasicRoomNode) {
+    return `room '${node.name}'`;
   } else if (node.reversed) {
     return `reverseConnection('${node.name}')`;
   } else {
@@ -84,11 +87,11 @@ export function isValidBuilding<
     }
   }
 
-  // shouldn't have duplicated or unmatched nodes
+  // shouldn't have duplicated or unmatched connector nodes
   const allNodes = b.hallways
     .flatMap(h => h.nodes)
     .map(({ nodeId }) => nodeId)
-    .filter(nodeId => b.allowedConnections.includes(nodeId.name));
+    .filter(isConnectorNode);
   for (const nodeId of allNodes) {
     if (nodeId instanceof StairNode) {
       const sameStaircase = allNodes
@@ -175,17 +178,19 @@ export function isValidBuilding<
   });
   if (ret != null) return ret;
 
-  // If there's more than 1 hallway, each hallway should have a node to
-  // connect it to the rest of the hallways
+  // If there's more than 1 hallway, each hallway should have a connector node
+  // to connect it to the rest of the hallways
   const indexOfHallwayWithNoNodes = b.hallways.findIndex(
     h =>
-      h.nodes.filter(({ nodeId }) => b.allowedConnections.includes(nodeId.name))
-        .length === 0
+      h.nodes
+        .map(node => node.nodeId)
+        .filter(isConnectorNode)
+        .filter(n => b.allowedConnections.includes(n.name)).length === 0
   );
   if (b.hallways.length > 1 && indexOfHallwayWithNoNodes !== -1) {
     return {
       valid: false,
-      reason: `The hallway at index ${indexOfHallwayWithNoNodes} has no nodes (Forks or Stairs) to connect it to the rest of the building.`,
+      reason: `The hallway at index ${indexOfHallwayWithNoNodes} has no connector nodes (Forks or Stairs) to connect it to the rest of the building.`,
       connectedSections,
     };
   }

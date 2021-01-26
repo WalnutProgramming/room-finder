@@ -3,6 +3,9 @@ import { Turn } from "./Turn";
 import { Stairs } from "./Stairs";
 import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
+import { Node, isConnectorNode } from "./node";
+import { BasicRoomNode } from "./BasicRoomNode";
+import { Fork } from "./Fork";
 
 /**
  * This class represents a single hallway. The hallway may have turns,
@@ -53,45 +56,88 @@ export class Hallway<ForkName extends string, StairName extends string> {
   idOfClosestNodeToIndex(
     roomInd: number,
     allowedConnections: (ForkName | StairName)[]
-  ): ForkNode<ForkName> | StairNode<StairName> {
-    let closestNodeInd: number;
-    this.partList.forEach((r, currentInd) => {
-      if (
-        "nodeId" in r &&
-        r.nodeId != null &&
-        allowedConnections.includes(r.nodeId.name) &&
-        (closestNodeInd === undefined ||
-          Math.abs(currentInd - roomInd) < Math.abs(closestNodeInd - roomInd))
-      ) {
-        closestNodeInd = currentInd;
-      }
-    });
+  ): Node<ForkName, StairName> {
+    // let closestNodeInd: number;
+    // this.partList.forEach((r, currentInd) => {
+    //   if (
+    //     "nodeId" in r &&
+    //     r.nodeId != null &&
+    //     allowedConnections.includes(r.nodeId.name) &&
+    //     (closestNodeInd === undefined ||
+    //       Math.abs(currentInd - roomInd) < Math.abs(closestNodeInd - roomInd))
+    //   ) {
+    //     closestNodeInd = currentInd;
+    //   }
+    // });
 
-    const closest = this.partList[closestNodeInd!] as
-      | Room<ForkName>
-      | Stairs<StairName>;
-    return closest.nodeId!;
+    // const closest = this.partList[closestNodeInd!] as
+    //   | Room<ForkName>
+    //   | Stairs<StairName>;
+    // return closest.nodeId!;
+    return (this.partList[roomInd] as Room<ForkName>).nodeId!;
   }
 
   /**
    * An array of all of the node IDs in this hallway.
    */
   get nodes(): {
-    nodeId: ForkNode<ForkName> | StairNode<StairName>;
+    nodeId: Node<ForkName, StairName>;
     edgeLengthFromPreviousNodeInHallway: number;
   }[] {
-    return this.partList
-      .filter(
-        (r): r is Room<ForkName> | Stairs<StairName> =>
-          "nodeId" in r && r.nodeId != null
-      )
-      .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
-        nodeId: nodeId!,
-        edgeLengthFromPreviousNodeInHallway:
-          edgeLengthFromPreviousNodeInHallway == null
-            ? 1
-            : edgeLengthFromPreviousNodeInHallway,
-      }));
+    // return this.partList
+    //   .filter(
+    //     (r): r is Room<ForkName> | Stairs<StairName> =>
+    //       "nodeId" in r && r.nodeId != null
+    //   )
+    //   .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
+    //     nodeId: nodeId!,
+    //     edgeLengthFromPreviousNodeInHallway:
+    //       edgeLengthFromPreviousNodeInHallway == null
+    //         ? 1
+    //         : edgeLengthFromPreviousNodeInHallway,
+    //   })
+    // );
+
+    let list = this.partList.filter(
+      (
+        r
+      ): r is (Room<ForkName> | Stairs<StairName>) & {
+        nodeId: Node<ForkName, StairName>;
+      } => "nodeId" in r && r.nodeId != null
+    );
+
+    let prevConnectorNodeIndex: number | undefined;
+
+    const nodes = list.map((item, i) => {
+      let nextConnectorNodeIndex: number | undefined;
+      for (let j = i; j < list.length; j++) {
+        if (isConnectorNode(list[j].nodeId)) {
+          nextConnectorNodeIndex = j;
+          break;
+        }
+      }
+
+      let weight: number;
+      if (prevConnectorNodeIndex != null && nextConnectorNodeIndex != null) {
+        const distance = nextConnectorNodeIndex - prevConnectorNodeIndex;
+        const totalWeight =
+          list[nextConnectorNodeIndex].edgeLengthFromPreviousNodeInHallway ?? 1;
+        weight = totalWeight / distance;
+      } else {
+        weight = 1;
+      }
+
+      if (isConnectorNode(list[i].nodeId)) {
+        prevConnectorNodeIndex = i;
+      }
+
+      return {
+        edgeLengthFromPreviousNodeInHallway: weight,
+        nodeId: item.nodeId,
+      };
+    });
+
+    return nodes;
   }
 
   /**

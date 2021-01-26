@@ -64,11 +64,12 @@ describe("Building.validity", () => {
   it("marks buildings with duplicated names as invalid", () => {
     const b = new Building([new Hallway([new Room("a"), new Room("a")])]);
 
-    expect(isValidBuilding(b)).toEqual({
-      valid: false,
-      reason: "There's more than one room with the name 'a'",
-      connectedSections: [],
-    });
+    expect(isValidBuilding(b)).toEqual(
+      expect.objectContaining({
+        valid: false,
+        reason: "There's more than one room with the name 'a'",
+      })
+    );
     expect(() => {
       assertValidBuilding(b);
     }).toThrow("There's more than one room with the name 'a'");
@@ -347,12 +348,14 @@ describe("Building.validity", () => {
     ).toEqual(
       expect.objectContaining({
         valid: false,
-        reason: `The edge from node 'f' to node reverseConnection('a') has a negative weight`,
+        reason: `The edge from node 'f' to node room 'z' has a negative weight`,
       })
     );
   });
 
   it("marks buildings with no nodes in a Hallway as invalid", () => {
+    // @ts-ignore
+    window.a = true;
     expect(
       isValidBuilding(
         new Building([
@@ -369,9 +372,11 @@ describe("Building.validity", () => {
       expect.objectContaining({
         valid: false,
         reason:
-          "The hallway at index 2 has no nodes (Forks or Stairs) to connect it to the rest of the building.",
+          "The hallway at index 2 has no connector nodes (Forks or Stairs) to connect it to the rest of the building.",
       })
     );
+    // @ts-ignore
+    window.a = false;
   });
 
   it("marks buildings with disconnected graphs as invalid", () => {
@@ -440,4 +445,37 @@ describe("Building.validity", () => {
       })
     );
   });
+
+  // TODO: maybe add back, not sure if needed
+  // it("doesn't allow multiple nodes with the same identity", () => {
+  //   expect(
+  //     isValidBuilding(
+  //       new Building([
+  //         new Hallway([new Room(), new Room("b"), new Fork(LEFT, "a", "")]),
+  //         new Hallway([
+  //           new Room(),
+  //           new Fork(RIGHT, reverseConnection("a"), ""),
+  //         ]),
+  //       ])
+  //     )
+  //   ).toEqual(
+  //     expect.objectContaining({
+  //       valid: true,
+  //     })
+  //   );
+
+  //   const room = new Room();
+  //   expect(
+  //     isValidBuilding(
+  //       new Building([
+  //         new Hallway([room, new Room("b"), new Fork(LEFT, "a", "")]),
+  //         new Hallway([room, new Fork(RIGHT, reverseConnection("a"), "")]),
+  //       ])
+  //     )
+  //   ).toEqual(
+  //     expect.objectContaining({
+  //       valid: false,
+  //     })
+  //   );
+  // });
 });

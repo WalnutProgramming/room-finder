@@ -51,7 +51,7 @@ describe("isConnectedGraph", () => {
       })
     ).toEqual({
       connected: false,
-      connectedSections: [["a", "b"], ["c"]],
+      connectedSections: [["c"], ["a", "b"]],
     });
 
     expect(
@@ -62,7 +62,7 @@ describe("isConnectedGraph", () => {
       })
     ).toEqual({
       connected: false,
-      connectedSections: [["a"], ["b", "c"]],
+      connectedSections: [["b", "c"], ["a"]],
     });
 
     expect(
@@ -75,8 +75,8 @@ describe("isConnectedGraph", () => {
     ).toEqual({
       connected: false,
       connectedSections: [
-        ["a", "b"],
         ["c", "d"],
+        ["a", "b"],
       ],
     });
 
@@ -91,9 +91,11 @@ describe("isConnectedGraph", () => {
     ).toEqual({
       connected: false,
       connectedSections: [
-        ["a", "b"],
         ["c", "d", "e"],
+        ["a", "b"],
       ],
     });
   });
 });
+
+// TODO: test directed graphs

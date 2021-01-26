@@ -4,7 +4,8 @@ import { getShortestPath, isConnectedGraph, getGraph } from "./graph";
 import { isLeftOrRight } from "./Direction";
 import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
-import { nodeToString } from "./node";
+import { serializeNode, Node } from "./node";
+import { BasicRoomNode } from "./BasicRoomNode";
 
 /**
  * @ignore
@@ -61,14 +62,22 @@ export class Building<
    */
   constructor(
     readonly hallways: Hallway<ForkName, StairName>[],
-    readonly allowedConnections: (
-      | ForkName
-      | StairName
-    )[] = hallways.flatMap(h => h.nodes.map(n => n.nodeId.name))
+    readonly allowedConnections: (ForkName | StairName)[] = hallways.flatMap(
+      h =>
+        h.nodes
+          .map(n => n.nodeId)
+          .filter(
+            (nodeId): nodeId is ForkNode<ForkName> | StairNode<StairName> =>
+              !(nodeId instanceof BasicRoomNode)
+          )
+          .map(nodeId => nodeId.name)
+    )
   ) {
     const hallwayNodes = this.hallways.map(h => {
-      return h.nodes.filter(({ nodeId }) =>
-        allowedConnections.includes(nodeId.name)
+      return h.nodes.filter(
+        ({ nodeId }) =>
+          nodeId instanceof BasicRoomNode ||
+          allowedConnections.includes(nodeId.name)
       );
     });
     this.graph = getGraph(hallwayNodes);
@@ -110,14 +119,14 @@ export class Building<
    * hallway
    */
   private getHallwayIndexAndIndexFromNode(
-    nodeId: ForkNode<ForkName> | StairNode<StairName>
+    nodeId: Node<ForkName, StairName>
   ): [number, number] {
     const inds = this.hallways.map(h =>
       h.partList.findIndex(
         r =>
           "nodeId" in r &&
           r.nodeId != null &&
-          nodeToString(r.nodeId) === nodeToString(nodeId)
+          serializeNode(r.nodeId) === serializeNode(nodeId)
       )
     );
     const hallwayInd = inds.findIndex(a => a !== -1);

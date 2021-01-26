@@ -9,7 +9,7 @@ import {
   reverseConnection,
   onFloor,
 } from ".";
-import { isValidBuilding } from "./buildingValidity";
+import { assertValidBuilding, isValidBuilding } from "./buildingValidity";
 
 const { RIGHT, LEFT, FRONT } = Direction;
 
@@ -533,10 +533,162 @@ describe("accessibility", () => {
       expect.objectContaining({
         valid: false,
         reason:
-          "The hallway at index 4 has no nodes (Forks or Stairs) to connect it to the rest of the building.",
+          "The hallway at index 4 has no connector nodes (Forks or Stairs) to connect it to the rest of the building.",
       })
     );
   });
 });
+
+/*
+describe("one-way hallways", () => {
+  const hallway10 = [
+    new Stairs(RIGHT, onFloor("b", 1)),
+    new Room("101"),
+    new Room("102"),
+    new Room("103"),
+    new Fork(RIGHT, "a", "the 11s"),
+  ];
+  const hallway11 = [
+    new Fork(FRONT, reverseConnection("a"), "the 10s"),
+    new Room("111"),
+    new Room("112"),
+    new Room("113"),
+    new Stairs(RIGHT, onFloor("c", 1)),
+  ];
+
+  const hallway20 = [
+    new Stairs(RIGHT, onFloor("b", 2)),
+    new Room("201"),
+    new Room("202"),
+    new Room("203"),
+    new Fork(RIGHT, "e", "the 11s"),
+  ];
+  const hallway21 = [
+    new Fork(FRONT, reverseConnection("e"), "the 11s"),
+    new Room("211"),
+    new Room("212"),
+    new Room("213"),
+    new Stairs(RIGHT, onFloor("c", 2)),
+  ];
+
+  let controlAnswer: string | null;
+
+  test("control case", () => {
+    const building = new Building([
+      new Hallway(hallway10),
+      new Hallway(hallway11),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    assertValidBuilding(building);
+
+    controlAnswer = building.getDirections("103", "111");
+
+    expect(controlAnswer).toMatchInlineSnapshot(`
+      "Turn left out of room 103
+      Continue, then turn right into the 11s
+      Continue, then turn left into room 111"
+    `);
+  });
+
+  test("one-way hallway with same directions", () => {
+    const building = new Building([
+      new Hallway(hallway10, { oneWay: "forward" }),
+      new Hallway(hallway11, { oneWay: "forward" }),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    assertValidBuilding(building);
+
+    expect(building.getDirections("103", "111")).toBe(controlAnswer);
+  });
+
+  test("one-way hallway 1", () => {
+    const building = new Building([
+      new Hallway(hallway10, { oneWay: "backward" }),
+      new Hallway(hallway11, { oneWay: "backward" }),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    assertValidBuilding(building);
+
+    expect(building.getDirections("103", "111")).not.toBe(controlAnswer);
+
+    expect(building.getDirections("103", "111")).toMatchInlineSnapshot(`
+      "Turn right out of room 103
+      Continue, then turn left into the stairs
+      Go up 1 floor of stairs
+      Turn right out of the stairs
+      Continue, then turn right into the 11s
+      Continue, then turn right into the stairs
+      Go down 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then turn right into room 111"
+    `);
+  });
+
+  test("one-way hallway 2", () => {
+    const building = new Building([
+      new Hallway(hallway10, { oneWay: "backward" }),
+      new Hallway(hallway11),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    assertValidBuilding(building);
+
+    expect(building.getDirections("103", "111")).not.toBe(controlAnswer);
+
+    expect(building.getDirections("103", "111")).toMatchInlineSnapshot(`
+      "Turn right out of room 103
+      Continue, then turn left into the stairs
+      Go up 1 floor of stairs
+      Turn right out of the stairs
+      Continue, then turn right into the 11s
+      Continue, then turn right into the stairs
+      Go down 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then turn right into room 111"
+    `);
+  });
+
+  test("one-way hallway 3", () => {
+    const building = new Building([
+      new Hallway(hallway10, { oneWay: "backward" }),
+      new Hallway(hallway11),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    assertValidBuilding(building);
+
+    expect(building.getDirections("101", "103")).toMatchInlineSnapshot(`
+      "Turn left out of room 101
+      Continue, then turn left into room 103"
+    `);
+
+    fail("snapshot above is wrong");
+  });
+
+  test("unconnected one-way building 1", () => {
+    const building = new Building([
+      new Hallway(hallway10, { oneWay: "backward" }),
+      new Hallway(hallway11, { oneWay: "forward" }),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    expect(isValidBuilding(building).valid).toBe(false);
+  });
+  test("unconnected one-way building 2", () => {
+    const building = new Building([
+      new Hallway(hallway10, { oneWay: "forward" }),
+      new Hallway(hallway11, { oneWay: "backward" }),
+      new Hallway(hallway20),
+      new Hallway(hallway21),
+    ]);
+    expect(isValidBuilding(building).valid).toBe(false);
+  });
+});
+
+describe("one-way connections", () => {});
+*/
 
 // TODO: add tests with SimpleHallway and rooms that are nodes
