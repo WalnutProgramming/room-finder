@@ -113,7 +113,7 @@ The version number in the URL isn't required, but it's recommended so that break
 
 ## Modeling a simple Hallway
 
-![A single, straight hallway with 8 rooms that alternate between the left and right sides. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](images/basic.png)
+![A single, straight hallway with 8 rooms that alternate between the left and right sides. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](docs-copied-files/images/basic.png)
 
 This is a simple example of a small "Building." Let's see the code we would need to model this Building so that we can generate directions between any pair of rooms.
 
@@ -179,7 +179,7 @@ console.log(building.getDirections("107", "103"));
 
 ## Adding a Turn
 
-![The same hallway as before, but with a Turn inserted between 105 and 106. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](images/fork.png)
+![The same hallway as before, but with a Turn inserted between 105 and 106. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](docs-copied-files/images/fork.png)
 
 This example is the same as above, but a Turn is inserted between 105 and 106. Again, we decided to start the hallway from the left in the picture. Imagine walking through this hallway:
 
@@ -239,6 +239,6 @@ console.log(building.getDirections("107", "103"));
 
 ## Adding a Fork
 
-![Two hallways connected by a Fork. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](images/fork.png)
+![Two hallways connected by a Fork. If the image is not appearing, view the docs at https://room-finder.walnut.direct.](docs-copied-files/images/fork.png)
 
 Since a person walking through the top hallway in this example has a choice about whether to turn right into the second hallway or to continue in the same hallway, we need to model this example as **two separate Hallways connected by a Fork**.
