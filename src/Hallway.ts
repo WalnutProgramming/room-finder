@@ -1,11 +1,9 @@
 import { Room } from "./Room";
 import { Turn } from "./Turn";
 import { Stairs } from "./Stairs";
-import { ForkNode } from "./ForkNode";
-import { StairNode } from "./StairNode";
 import { Node, isConnectorNode } from "./node";
-import { BasicRoomNode } from "./BasicRoomNode";
-import { Fork } from "./Fork";
+
+export type OneWay = "forward" | "backward" | false;
 
 /**
  * This class represents a single hallway. The hallway may have turns,
@@ -14,6 +12,7 @@ import { Fork } from "./Fork";
  */
 export class Hallway<ForkName extends string, StairName extends string> {
   readonly allowFrontConnectionsInMiddle: boolean;
+  readonly oneWay: OneWay;
 
   /**
    *
@@ -24,14 +23,22 @@ export class Hallway<ForkName extends string, StairName extends string> {
    * @param allowFrontConnectionsInMiddle - If true, this hallway may have
    * [[Rooms]] and [[Stairs]] that are not at the ends of the hallway, but are
    * marked as FRONT. This is used by [[isValidBuilding]].
+   * @param oneWay - false if you can travel both ways in this hallway.
+   * "forward" if you can only travel from the first to the last element of this
+   * hallway. "backward" if you can only travel from the last element to the first.
    */
   constructor(
     public partList: (Room<ForkName> | Stairs<StairName> | Turn)[],
     {
       allowFrontConnectionsInMiddle = false,
-    }: { allowFrontConnectionsInMiddle?: boolean } = {}
+      oneWay = false,
+    }: {
+      allowFrontConnectionsInMiddle?: boolean;
+      oneWay?: OneWay;
+    } = {}
   ) {
     this.allowFrontConnectionsInMiddle = allowFrontConnectionsInMiddle;
+    this.oneWay = oneWay;
   }
 
   /**

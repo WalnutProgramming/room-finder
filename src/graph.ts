@@ -3,6 +3,18 @@ import dijkstra from "dijkstrajs";
 import { ForkNode, reverseConnection } from "./ForkNode";
 import { StairNode, onFloor } from "./StairNode";
 import { serializeNode, nodeFromString, Node } from "./node";
+import { OneWay } from "./Hallway";
+
+export type HallConnectorsStructures<
+  ForkName extends string,
+  StairName extends string
+> = {
+  nodes: {
+    nodeId: Node<ForkName, StairName>;
+    edgeLengthFromPreviousNodeInHallway: number;
+  }[];
+  oneWay: OneWay;
+}[];
 
 /**
  * @ignore
@@ -11,12 +23,10 @@ function getHallwayConnections<
   ForkName extends string,
   StairName extends string
 >(
-  hallConnections: {
-    nodeId: Node<ForkName, StairName>;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][]
+  hallConnections: HallConnectorsStructures<ForkName, StairName>
 ): [string, string][] {
   return hallConnections
+    .map(hallway => hallway.nodes)
     .flat()
     .map(thing => thing.nodeId)
     .filter(
@@ -32,12 +42,10 @@ function getHallwayConnections<
 
 /** @ignore */
 function getStairConnections<ForkName extends string, StairName extends string>(
-  hallConnections: {
-    nodeId: Node<ForkName, StairName>;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][]
+  hallConnections: HallConnectorsStructures<ForkName, StairName>
 ): string[][] {
   const stairNodes = hallConnections
+    .map(hallway => hallway.nodes)
     .flat()
     .map(thing => thing.nodeId)
     .filter((st): st is StairNode<StairName> => st instanceof StairNode);
@@ -59,30 +67,30 @@ function getStairConnections<ForkName extends string, StairName extends string>(
  * @returns The graph to be used by getShortestPath
  */
 export function getGraph<ForkName extends string, StairName extends string>(
-  hallConnectorsStructures: {
-    nodeId: Node<ForkName, StairName>;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][]
+  hallConnectorsStructures: HallConnectorsStructures<ForkName, StairName>
 ) {
-  const hallConnectors = hallConnectorsStructures.map(hall =>
-    hall.map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
-      nodeId: serializeNode(nodeId),
-      edgeLengthFromPreviousNodeInHallway,
-    }))
-  );
+  const hallConnectors = hallConnectorsStructures.map(hall => ({
+    oneWay: hall.oneWay,
+    nodes: hall.nodes.map(
+      ({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
+        nodeId: serializeNode(nodeId),
+        edgeLengthFromPreviousNodeInHallway,
+      })
+    ),
+  }));
   const stairConnections = getStairConnections(hallConnectorsStructures);
   const hallwayConnections = getHallwayConnections(hallConnectorsStructures);
 
   const graph: dijkstra.Graph = {};
-  hallConnectors.forEach(hall => {
+  hallConnectors.forEach(({ oneWay, nodes: hall }) => {
     hall.forEach((node, ind) => {
       const id = node.nodeId;
       const edgesTo: { [key: string]: number } = {};
-      if (ind != 0) {
+      if (ind !== 0 && oneWay !== "forward") {
         edgesTo[hall[ind - 1].nodeId] =
           hall[ind].edgeLengthFromPreviousNodeInHallway;
       }
-      if (ind != hall.length - 1) {
+      if (ind !== hall.length - 1 && oneWay !== "backward") {
         edgesTo[hall[ind + 1].nodeId] =
           hall[ind + 1].edgeLengthFromPreviousNodeInHallway;
       }

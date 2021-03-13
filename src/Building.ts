@@ -1,6 +1,11 @@
 import { Hallway } from "./Hallway";
 import { Room } from "./Room";
-import { getShortestPath, isConnectedGraph, getGraph } from "./graph";
+import {
+  getShortestPath,
+  isConnectedGraph,
+  getGraph,
+  HallConnectorsStructures,
+} from "./graph";
 import { isLeftOrRight } from "./Direction";
 import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
@@ -73,12 +78,18 @@ export class Building<
           .map(nodeId => nodeId.name)
     )
   ) {
-    const hallwayNodes = this.hallways.map(h => {
-      return h.nodes.filter(
-        ({ nodeId }) =>
-          nodeId instanceof BasicRoomNode ||
-          allowedConnections.includes(nodeId.name)
-      );
+    const hallwayNodes: HallConnectorsStructures<
+      ForkName,
+      StairName
+    > = this.hallways.map(h => {
+      return {
+        nodes: h.nodes.filter(
+          ({ nodeId }) =>
+            nodeId instanceof BasicRoomNode ||
+            allowedConnections.includes(nodeId.name)
+        ),
+        oneWay: h.oneWay,
+      };
     });
     this.graph = getGraph(hallwayNodes);
     this.roomsList = hallways

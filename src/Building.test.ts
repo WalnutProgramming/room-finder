@@ -539,7 +539,6 @@ describe("accessibility", () => {
   });
 });
 
-/*
 describe("one-way hallways", () => {
   const hallway10 = [
     new Stairs(RIGHT, onFloor("b", 1)),
@@ -661,11 +660,17 @@ describe("one-way hallways", () => {
     assertValidBuilding(building);
 
     expect(building.getDirections("101", "103")).toMatchInlineSnapshot(`
-      "Turn left out of room 101
-      Continue, then turn left into room 103"
+      "Turn right out of room 101
+      Continue, then turn left into the stairs
+      Go up 1 floor of stairs
+      Turn right out of the stairs
+      Continue, then turn right into the 11s
+      Continue, then turn right into the stairs
+      Go down 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then after entering the 10s, turn left
+      Continue, then turn right into room 103"
     `);
-
-    fail("snapshot above is wrong");
   });
 
   test("unconnected one-way building 1", () => {
@@ -688,7 +693,6 @@ describe("one-way hallways", () => {
   });
 });
 
-describe("one-way connections", () => {});
-*/
+// describe("one-way connections", () => {});
 
 // TODO: add tests with SimpleHallway and rooms that are nodes
