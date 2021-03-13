@@ -1,8 +1,9 @@
 import { Room } from "./Room";
 import { Turn } from "./Turn";
 import { Stairs } from "./Stairs";
-import { ForkNode } from "./ForkNode";
-import { StairNode } from "./StairNode";
+import { Node, isConnectorNode } from "./node";
+
+export type OneWay = "forward" | "backward" | false;
 
 /**
  * This class represents a single hallway. The hallway may have turns,
@@ -11,6 +12,7 @@ import { StairNode } from "./StairNode";
  */
 export class Hallway<ForkName extends string, StairName extends string> {
   readonly allowFrontConnectionsInMiddle: boolean;
+  readonly oneWay: OneWay;
 
   /**
    *
@@ -21,14 +23,22 @@ export class Hallway<ForkName extends string, StairName extends string> {
    * @param allowFrontConnectionsInMiddle - If true, this hallway may have
    * [[Rooms]] and [[Stairs]] that are not at the ends of the hallway, but are
    * marked as FRONT. This is used by [[isValidBuilding]].
+   * @param oneWay - false if you can travel both ways in this hallway.
+   * "forward" if you can only travel from the first to the last element of this
+   * hallway. "backward" if you can only travel from the last element to the first.
    */
   constructor(
     public partList: (Room<ForkName> | Stairs<StairName> | Turn)[],
     {
       allowFrontConnectionsInMiddle = false,
-    }: { allowFrontConnectionsInMiddle?: boolean } = {}
+      oneWay = false,
+    }: {
+      allowFrontConnectionsInMiddle?: boolean;
+      oneWay?: OneWay;
+    } = {}
   ) {
     this.allowFrontConnectionsInMiddle = allowFrontConnectionsInMiddle;
+    this.oneWay = oneWay;
   }
 
   /**
@@ -53,45 +63,88 @@ export class Hallway<ForkName extends string, StairName extends string> {
   idOfClosestNodeToIndex(
     roomInd: number,
     allowedConnections: (ForkName | StairName)[]
-  ): ForkNode<ForkName> | StairNode<StairName> {
-    let closestNodeInd: number;
-    this.partList.forEach((r, currentInd) => {
-      if (
-        "nodeId" in r &&
-        r.nodeId != null &&
-        allowedConnections.includes(r.nodeId.name) &&
-        (closestNodeInd === undefined ||
-          Math.abs(currentInd - roomInd) < Math.abs(closestNodeInd - roomInd))
-      ) {
-        closestNodeInd = currentInd;
-      }
-    });
+  ): Node<ForkName, StairName> {
+    // let closestNodeInd: number;
+    // this.partList.forEach((r, currentInd) => {
+    //   if (
+    //     "nodeId" in r &&
+    //     r.nodeId != null &&
+    //     allowedConnections.includes(r.nodeId.name) &&
+    //     (closestNodeInd === undefined ||
+    //       Math.abs(currentInd - roomInd) < Math.abs(closestNodeInd - roomInd))
+    //   ) {
+    //     closestNodeInd = currentInd;
+    //   }
+    // });
 
-    const closest = this.partList[closestNodeInd!] as
-      | Room<ForkName>
-      | Stairs<StairName>;
-    return closest.nodeId!;
+    // const closest = this.partList[closestNodeInd!] as
+    //   | Room<ForkName>
+    //   | Stairs<StairName>;
+    // return closest.nodeId!;
+    return (this.partList[roomInd] as Room<ForkName>).nodeId!;
   }
 
   /**
    * An array of all of the node IDs in this hallway.
    */
   get nodes(): {
-    nodeId: ForkNode<ForkName> | StairNode<StairName>;
+    nodeId: Node<ForkName, StairName>;
     edgeLengthFromPreviousNodeInHallway: number;
   }[] {
-    return this.partList
-      .filter(
-        (r): r is Room<ForkName> | Stairs<StairName> =>
-          "nodeId" in r && r.nodeId != null
-      )
-      .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
-        nodeId: nodeId!,
-        edgeLengthFromPreviousNodeInHallway:
-          edgeLengthFromPreviousNodeInHallway == null
-            ? 1
-            : edgeLengthFromPreviousNodeInHallway,
-      }));
+    // return this.partList
+    //   .filter(
+    //     (r): r is Room<ForkName> | Stairs<StairName> =>
+    //       "nodeId" in r && r.nodeId != null
+    //   )
+    //   .map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
+    //     nodeId: nodeId!,
+    //     edgeLengthFromPreviousNodeInHallway:
+    //       edgeLengthFromPreviousNodeInHallway == null
+    //         ? 1
+    //         : edgeLengthFromPreviousNodeInHallway,
+    //   })
+    // );
+
+    let list = this.partList.filter(
+      (
+        r
+      ): r is (Room<ForkName> | Stairs<StairName>) & {
+        nodeId: Node<ForkName, StairName>;
+      } => "nodeId" in r && r.nodeId != null
+    );
+
+    let prevConnectorNodeIndex: number | undefined;
+
+    const nodes = list.map((item, i) => {
+      let nextConnectorNodeIndex: number | undefined;
+      for (let j = i; j < list.length; j++) {
+        if (isConnectorNode(list[j].nodeId)) {
+          nextConnectorNodeIndex = j;
+          break;
+        }
+      }
+
+      let weight: number;
+      if (prevConnectorNodeIndex != null && nextConnectorNodeIndex != null) {
+        const distance = nextConnectorNodeIndex - prevConnectorNodeIndex;
+        const totalWeight =
+          list[nextConnectorNodeIndex].edgeLengthFromPreviousNodeInHallway ?? 1;
+        weight = totalWeight / distance;
+      } else {
+        weight = 1;
+      }
+
+      if (isConnectorNode(list[i].nodeId)) {
+        prevConnectorNodeIndex = i;
+      }
+
+      return {
+        edgeLengthFromPreviousNodeInHallway: weight,
+        nodeId: item.nodeId,
+      };
+    });
+
+    return nodes;
   }
 
   /**

@@ -2,7 +2,19 @@
 import dijkstra from "dijkstrajs";
 import { ForkNode, reverseConnection } from "./ForkNode";
 import { StairNode, onFloor } from "./StairNode";
-import { nodeToString, nodeFromString } from "./node";
+import { serializeNode, nodeFromString, Node } from "./node";
+import { OneWay } from "./Hallway";
+
+export type HallConnectorsStructures<
+  ForkName extends string,
+  StairName extends string
+> = {
+  nodes: {
+    nodeId: Node<ForkName, StairName>;
+    edgeLengthFromPreviousNodeInHallway: number;
+  }[];
+  oneWay: OneWay;
+}[];
 
 /**
  * @ignore
@@ -11,12 +23,10 @@ function getHallwayConnections<
   ForkName extends string,
   StairName extends string
 >(
-  hallConnections: {
-    nodeId: ForkNode<ForkName> | StairNode<StairName>;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][]
+  hallConnections: HallConnectorsStructures<ForkName, StairName>
 ): [string, string][] {
   return hallConnections
+    .map(hallway => hallway.nodes)
     .flat()
     .map(thing => thing.nodeId)
     .filter(
@@ -25,19 +35,17 @@ function getHallwayConnections<
     )
     .filter(connection => !connection.reversed)
     .map(forkNode => [
-      nodeToString(forkNode),
-      nodeToString(reverseConnection(forkNode.name)),
+      serializeNode(forkNode),
+      serializeNode(reverseConnection(forkNode.name)),
     ]);
 }
 
 /** @ignore */
 function getStairConnections<ForkName extends string, StairName extends string>(
-  hallConnections: {
-    nodeId: ForkNode<ForkName> | StairNode<StairName>;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][]
+  hallConnections: HallConnectorsStructures<ForkName, StairName>
 ): string[][] {
   const stairNodes = hallConnections
+    .map(hallway => hallway.nodes)
     .flat()
     .map(thing => thing.nodeId)
     .filter((st): st is StairNode<StairName> => st instanceof StairNode);
@@ -46,7 +54,7 @@ function getStairConnections<ForkName extends string, StairName extends string>(
     stairNodes
       .filter(node => node.name === name)
       .sort((a, b) => b.floor - a.floor)
-      .map(nodeToString)
+      .map(serializeNode)
   );
 }
 
@@ -59,30 +67,30 @@ function getStairConnections<ForkName extends string, StairName extends string>(
  * @returns The graph to be used by getShortestPath
  */
 export function getGraph<ForkName extends string, StairName extends string>(
-  hallConnectorsStructures: {
-    nodeId: ForkNode<ForkName> | StairNode<StairName>;
-    edgeLengthFromPreviousNodeInHallway: number;
-  }[][]
+  hallConnectorsStructures: HallConnectorsStructures<ForkName, StairName>
 ) {
-  const hallConnectors = hallConnectorsStructures.map(hall =>
-    hall.map(({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
-      nodeId: nodeToString(nodeId),
-      edgeLengthFromPreviousNodeInHallway,
-    }))
-  );
+  const hallConnectors = hallConnectorsStructures.map(hall => ({
+    oneWay: hall.oneWay,
+    nodes: hall.nodes.map(
+      ({ nodeId, edgeLengthFromPreviousNodeInHallway }) => ({
+        nodeId: serializeNode(nodeId),
+        edgeLengthFromPreviousNodeInHallway,
+      })
+    ),
+  }));
   const stairConnections = getStairConnections(hallConnectorsStructures);
   const hallwayConnections = getHallwayConnections(hallConnectorsStructures);
 
   const graph: dijkstra.Graph = {};
-  hallConnectors.forEach(hall => {
+  hallConnectors.forEach(({ oneWay, nodes: hall }) => {
     hall.forEach((node, ind) => {
       const id = node.nodeId;
       const edgesTo: { [key: string]: number } = {};
-      if (ind != 0) {
+      if (ind !== 0 && oneWay !== "forward") {
         edgesTo[hall[ind - 1].nodeId] =
           hall[ind].edgeLengthFromPreviousNodeInHallway;
       }
-      if (ind != hall.length - 1) {
+      if (ind !== hall.length - 1 && oneWay !== "backward") {
         edgesTo[hall[ind + 1].nodeId] =
           hall[ind + 1].edgeLengthFromPreviousNodeInHallway;
       }
@@ -127,11 +135,11 @@ export function getShortestPath<
   StairName extends string
 >(
   graph: dijkstra.Graph,
-  idFrom: ForkNode<ForkName> | StairNode<StairName>,
-  idTo: ForkNode<ForkName> | StairNode<StairName>
-): (ForkNode<ForkName> | StairNode<StairName>)[] {
+  idFrom: Node<ForkName, StairName>,
+  idTo: Node<ForkName, StairName>
+): Node<ForkName, StairName>[] {
   return dijkstra
-    .find_path(graph, nodeToString(idFrom), nodeToString(idTo))
+    .find_path(graph, serializeNode(idFrom), serializeNode(idTo))
     .map(nodeStr => nodeFromString(nodeStr));
 }
 
@@ -143,33 +151,89 @@ export function getShortestPath<
 export function isConnectedGraph(
   graph: dijkstra.Graph
 ): { connected: boolean; connectedSections: string[][] } {
-  const nodeIds: string[] = Object.keys(graph);
+  const nodeIdsWithDuplicates: string[] = [
+    ...Object.keys(graph),
+    ...Object.values(graph)
+      .map(v => Object.keys(v))
+      .flat(),
+  ];
+
+  const nodeIds: string[] = [...new Set(nodeIdsWithDuplicates)];
 
   if (nodeIds.length === 0) {
     return { connected: true, connectedSections: [] };
   }
 
-  let traveled: string[] = [];
-  const travelOut = (nodeId: string) => {
-    if (!traveled.includes(nodeId)) {
-      traveled.push(nodeId);
-      if (Object.keys(graph).includes(nodeId)) {
-        for (const newNode of Object.keys(graph[nodeId])) {
-          travelOut(newNode);
-        }
-      }
-    }
-  };
+  // https://en.wikipedia.org/wiki/Kosaraju%27s_algorithm
 
-  const connectedSections: string[][] = [];
-  while (connectedSections.flat().length < nodeIds.length) {
-    const nextUntraveledNodeId = nodeIds.find(
-      s => !connectedSections.flat().includes(s)
-    )!;
-    traveled = [];
-    travelOut(nextUntraveledNodeId);
-    connectedSections.push(traveled);
+  const nodeIdsVisited: string[] = [];
+  const L: string[] = [];
+
+  function visit(u: string) {
+    if (!nodeIdsVisited.includes(u)) {
+      nodeIdsVisited.push(u);
+      const outNeigbors = graph[u] ? Object.keys(graph[u]) : [];
+      for (const v of outNeigbors) {
+        visit(v);
+      }
+      L.unshift(u);
+    }
+  }
+  for (const u of nodeIds) {
+    visit(u);
   }
 
-  return { connected: connectedSections.length === 1, connectedSections };
+  // key is the root
+  const components: Record<string, string[]> = {};
+  function assign(u: string, root: string) {
+    const assignedValues = [
+      ...Object.keys(components),
+      ...Object.values(components).flat(),
+    ];
+    if (!assignedValues.includes(u)) {
+      if (!Object.keys(components).includes(root)) components[root] = [];
+      components[root].push(u);
+      const inNeigbors = Object.keys(graph).filter(k =>
+        Object.keys(graph[k]).includes(u)
+      );
+      for (const v of inNeigbors) {
+        assign(v, root);
+      }
+    }
+  }
+  for (const u of L) {
+    assign(u, u);
+  }
+
+  const flattenedComponents: string[][] = Object.entries(
+    components
+  ).map(([k, vals]) => [...new Set([k, ...vals])]);
+  return {
+    connected: flattenedComponents.length === 1,
+    connectedSections: flattenedComponents,
+  };
+
+  // let traveled: string[] = [];
+  // const travelOut = (nodeId: string) => {
+  //   if (!traveled.includes(nodeId)) {
+  //     traveled.push(nodeId);
+  //     if (Object.keys(graph).includes(nodeId)) {
+  //       for (const newNode of Object.keys(graph[nodeId])) {
+  //         travelOut(newNode);
+  //       }
+  //     }
+  //   }
+  // };
+
+  // const connectedSections: string[][] = [];
+  // while (connectedSections.flat().length < nodeIds.length) {
+  //   const nextUntraveledNodeId = nodeIds.find(
+  //     s => !connectedSections.flat().includes(s)
+  //   )!;
+  //   traveled = [];
+  //   travelOut(nextUntraveledNodeId);
+  //   connectedSections.push(traveled);
+  // }
+
+  // return { connected: connectedSections.length === 1, connectedSections };
 }

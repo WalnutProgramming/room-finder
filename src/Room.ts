@@ -1,6 +1,7 @@
 import { HallwayElement } from "./HallwayElement";
 import { Direction } from "./Direction";
 import { ForkNode, getConnection } from "./ForkNode";
+import { BasicRoomNode } from "./BasicRoomNode";
 
 /**
  * This class can represent a room or a [[Fork]]. It might seem illogical that
@@ -14,7 +15,7 @@ export class Room<ForkName extends string> extends HallwayElement {
    *   * a string, like `"myConnection"`, to represent a forward connection, or
    *   * a ForkNode made with [[reverseConnection]], like `reverseConnection("myConnection")`.
    */
-  readonly nodeId: ForkNode<ForkName> | undefined;
+  readonly nodeId: ForkNode<ForkName> | BasicRoomNode | undefined;
 
   /**
    *
@@ -46,5 +47,6 @@ export class Room<ForkName extends string> extends HallwayElement {
       aliases,
     });
     if (nodeId != null) this.nodeId = getConnection<ForkName>(nodeId);
+    else if (name != null) this.nodeId = new BasicRoomNode(name);
   }
 }
