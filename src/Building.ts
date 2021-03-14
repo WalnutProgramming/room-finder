@@ -11,6 +11,7 @@ import { ForkNode } from "./ForkNode";
 import { StairNode } from "./StairNode";
 import { serializeNode, Node } from "./node";
 import { BasicRoomNode } from "./BasicRoomNode";
+import { StairOneWay } from "./StairOneWay";
 
 /**
  * @ignore
@@ -60,13 +61,21 @@ export class Building<
    */
   readonly roomsList: string[];
 
+  readonly oneWayStaircases: Partial<Record<StairName, StairOneWay>>;
+
   /**
    *
    * @param hallways - All of the hallways in this building
+   * @param oneWayStaircases - An object representing all of the one way
+   * staircases in the building. For example, if stairA is one-way and only
+   * down, it would be { stairA: "down" }.
    * @category Important
    */
   constructor(
     readonly hallways: Hallway<ForkName, StairName>[],
+    {
+      oneWayStaircases = {},
+    }: { oneWayStaircases?: Partial<Record<StairName, StairOneWay>> } = {},
     readonly allowedConnections: (ForkName | StairName)[] = hallways.flatMap(
       h =>
         h.nodes
@@ -78,6 +87,7 @@ export class Building<
           .map(nodeId => nodeId.name)
     )
   ) {
+    this.oneWayStaircases = oneWayStaircases;
     const hallwayNodes: HallConnectorsStructures<
       ForkName,
       StairName
@@ -91,7 +101,7 @@ export class Building<
         oneWay: h.oneWay,
       };
     });
-    this.graph = getGraph(hallwayNodes);
+    this.graph = getGraph(hallwayNodes, this.oneWayStaircases);
     this.roomsList = hallways
       .flatMap(h => h.partList)
       .filter((a): a is Room<ForkName> => "name" in a && a.name != null)
@@ -104,6 +114,7 @@ export class Building<
   ) {
     return new Building(
       this.hallways,
+      this.oneWayStaircases,
       typeof allowedConnections === "function"
         ? this.allowedConnections.filter(allowedConnections)
         : allowedConnections

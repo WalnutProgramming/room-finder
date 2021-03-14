@@ -691,8 +691,66 @@ describe("one-way hallways", () => {
     ]);
     expect(isValidBuilding(building).valid).toBe(false);
   });
+
+  test("one-way staircase: up", () => {
+    const building = new Building(
+      [
+        new Hallway(hallway10),
+        new Hallway(hallway11),
+        new Hallway(hallway20),
+        new Hallway(hallway21),
+      ],
+      { oneWayStaircases: { b: "up" } }
+    );
+
+    expect(building.getDirections("101", "201")).toMatchInlineSnapshot(`
+      "Turn right out of room 101
+      Continue, then turn left into the stairs
+      Go up 1 floor of stairs
+      Turn right out of the stairs
+      Continue, then turn left into room 201"
+    `);
+    expect(building.getDirections("201", "101")).toMatchInlineSnapshot(`
+      "Turn left out of room 201
+      Continue, then turn right into the 11s
+      Continue, then turn right into the stairs
+      Go down 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then after entering the 10s, turn left
+      Continue, then turn right into room 101"
+    `);
+  });
+
+  test("one-way staircase: down", () => {
+    const building = new Building(
+      [
+        new Hallway(hallway10),
+        new Hallway(hallway11),
+        new Hallway(hallway20),
+        new Hallway(hallway21),
+      ],
+      { oneWayStaircases: { b: "down" } }
+    );
+
+    expect(building.getDirections("101", "201")).toMatchInlineSnapshot(`
+      "Turn left out of room 101
+      Continue, then turn right into the 11s
+      Continue, then turn right into the stairs
+      Go up 1 floor of stairs
+      Turn left out of the stairs
+      Continue, then after entering the 11s, turn left
+      Continue, then turn right into room 201"
+    `);
+    expect(building.getDirections("201", "101")).toMatchInlineSnapshot(`
+      "Turn right out of room 201
+      Continue, then turn left into the stairs
+      Go down 1 floor of stairs
+      Turn right out of the stairs
+      Continue, then turn left into room 101"
+    `);
+  });
 });
 
-// describe("one-way connections", () => {});
+// describe("one-way forks", () => {});
 
 // TODO: add tests with SimpleHallway and rooms that are nodes

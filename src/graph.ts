@@ -4,6 +4,7 @@ import { ForkNode, reverseConnection } from "./ForkNode";
 import { StairNode, onFloor } from "./StairNode";
 import { serializeNode, nodeFromString, Node } from "./node";
 import { OneWay } from "./Hallway";
+import { StairOneWay } from "./StairOneWay";
 
 export type HallConnectorsStructures<
   ForkName extends string,
@@ -42,20 +43,22 @@ function getHallwayConnections<
 
 /** @ignore */
 function getStairConnections<ForkName extends string, StairName extends string>(
-  hallConnections: HallConnectorsStructures<ForkName, StairName>
-): string[][] {
+  hallConnections: HallConnectorsStructures<ForkName, StairName>,
+  oneWayStaircases: Partial<Record<StairName, StairOneWay>>
+): { floors: string[]; oneWay: StairOneWay }[] {
   const stairNodes = hallConnections
     .map(hallway => hallway.nodes)
     .flat()
     .map(thing => thing.nodeId)
     .filter((st): st is StairNode<StairName> => st instanceof StairNode);
   const staircases = [...new Set(stairNodes.map(node => node.name))];
-  return staircases.map(name =>
-    stairNodes
+  return staircases.map(name => ({
+    floors: stairNodes
       .filter(node => node.name === name)
       .sort((a, b) => b.floor - a.floor)
-      .map(serializeNode)
-  );
+      .map(serializeNode),
+    oneWay: oneWayStaircases[name] ?? false,
+  }));
 }
 
 /**
@@ -67,7 +70,8 @@ function getStairConnections<ForkName extends string, StairName extends string>(
  * @returns The graph to be used by getShortestPath
  */
 export function getGraph<ForkName extends string, StairName extends string>(
-  hallConnectorsStructures: HallConnectorsStructures<ForkName, StairName>
+  hallConnectorsStructures: HallConnectorsStructures<ForkName, StairName>,
+  oneWayStaircases: Partial<Record<StairName, StairOneWay>>
 ) {
   const hallConnectors = hallConnectorsStructures.map(hall => ({
     oneWay: hall.oneWay,
@@ -78,7 +82,10 @@ export function getGraph<ForkName extends string, StairName extends string>(
       })
     ),
   }));
-  const stairConnections = getStairConnections(hallConnectorsStructures);
+  const stairConnections = getStairConnections(
+    hallConnectorsStructures,
+    oneWayStaircases
+  );
   const hallwayConnections = getHallwayConnections(hallConnectorsStructures);
 
   const graph: dijkstra.Graph = {};
@@ -94,18 +101,25 @@ export function getGraph<ForkName extends string, StairName extends string>(
         edgesTo[hall[ind + 1].nodeId] =
           hall[ind + 1].edgeLengthFromPreviousNodeInHallway;
       }
-      stairConnections.forEach(stairList => {
+      stairConnections.forEach(staircase => {
+        const stairList = staircase.floors;
         const myFloorNum = stairList.indexOf(id);
-        if (myFloorNum != -1) {
+        if (myFloorNum !== -1) {
           stairList.forEach((otherId, otherFloorNum) => {
-            if (otherId != id) {
-              const diff = Math.abs(myFloorNum - otherFloorNum);
-              // We set the weight to slightly less than the number
-              // of staircases we're going up because it's easier to go
-              // up multiple stairs at once than to go up one flight, then
-              // go to another set of stairs
-              edgesTo[otherId] = diff * (1 - 0.001 * diff);
-            }
+            if (otherId === id) return;
+
+            // I feel like the next lines should have ">" and "<" switched, but
+            // the results seem to be wrong that way.
+            if (staircase.oneWay === "up" && otherFloorNum > myFloorNum) return;
+            if (staircase.oneWay === "down" && otherFloorNum < myFloorNum)
+              return;
+
+            const diff = Math.abs(myFloorNum - otherFloorNum);
+            // We set the weight to slightly less than the number
+            // of staircases we're going up because it's easier to go
+            // up multiple stairs at once than to go up one flight, then
+            // go to another set of stairs
+            edgesTo[otherId] = diff * (1 - 0.001 * diff);
           });
         }
       });
