@@ -114,7 +114,7 @@ export class Building<
   ) {
     return new Building(
       this.hallways,
-      this.oneWayStaircases,
+      { oneWayStaircases: this.oneWayStaircases },
       typeof allowedConnections === "function"
         ? this.allowedConnections.filter(allowedConnections)
         : allowedConnections
