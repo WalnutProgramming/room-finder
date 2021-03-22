@@ -9,7 +9,11 @@ import { StairNode } from "./StairNode";
  */
 export class Stairs<StairName extends string> extends HallwayElement {
   readonly nodeId: StairNode<StairName>;
-  readonly fullName: string;
+  private readonly _fullName: string;
+
+  get fullName() {
+    return this._fullName;
+  }
 
   constructor(
     side: Direction,
@@ -18,7 +22,7 @@ export class Stairs<StairName extends string> extends HallwayElement {
     edgeLengthFromPreviousNodeInHallway?: number | undefined
   ) {
     super(null, side, { edgeLengthFromPreviousNodeInHallway });
-    this.fullName = fullName;
+    this._fullName = fullName;
     this.nodeId = nodeId;
   }
 
