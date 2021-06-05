@@ -6,5 +6,8 @@ if (process.env.NODE_ENV === "test") {
 
 module.exports = {
   presets,
-  plugins: ["@babel/proposal-class-properties"],
+  plugins: [
+    "@babel/proposal-class-properties",
+    "@babel/proposal-nullish-coalescing-operator",
+  ],
 };
