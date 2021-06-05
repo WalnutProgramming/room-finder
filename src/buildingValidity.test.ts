@@ -354,8 +354,6 @@ describe("Building.validity", () => {
   });
 
   it("marks buildings with no nodes in a Hallway as invalid", () => {
-    // @ts-ignore
-    window.a = true;
     expect(
       isValidBuilding(
         new Building([
@@ -375,8 +373,6 @@ describe("Building.validity", () => {
           "The hallway at index 2 has no connector nodes (Forks or Stairs) to connect it to the rest of the building.",
       })
     );
-    // @ts-ignore
-    window.a = false;
   });
 
   it("marks buildings with disconnected graphs as invalid", () => {
